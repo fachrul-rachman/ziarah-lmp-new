@@ -27,21 +27,29 @@
 <tr><td align="center" style="padding: 24px 16px;">
 <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%;">
 
-    {{-- TAMBAHAN: Salam pembuka --}}
+    {{-- Label atas --}}
     <tr>
-        <td style="font-size: 15px; color: #1a1a1a; padding-bottom: 6px;">
-            Salam Sejahtera Bapak/Ibu <strong>{{ $booking->customer_name }}</strong>,
+        <td style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #999; padding-bottom: 6px;">
+            Konfirmasi Pemesanan
         </td>
     </tr>
 
-    {{-- TAMBAHAN: Intro sebelum card --}}
+    {{-- Judul --}}
     <tr>
-        <td style="font-size: 15px; color: #555; padding-bottom: 20px;">
-            Berikut konfirmasi detail <strong style="color: #1a1a1a;">{{ $activityLabel }}</strong>:
+        <td style="font-size: 26px; font-weight: 400; color: #1a1a1a; font-family: Georgia, serif; padding-bottom: 8px;">
+            Booking Berhasil
         </td>
     </tr>
 
-    {{-- Card (tidak diubah) --}}
+    {{-- Salam --}}
+    <tr>
+        <td style="font-size: 15px; color: #555; padding-bottom: 24px;">
+            Hai <strong style="color: #1a1a1a;">{{ $booking->customer_name }}</strong>,
+            pemesanan Anda sudah berhasil dibuat.
+        </td>
+    </tr>
+
+    {{-- Card --}}
     <tr>
         <td style="border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden;">
         <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -63,10 +71,12 @@
                 </td>
             </tr>
 
-            {{-- Grid detail --}}
+            {{-- Grid detail pakai table 2 kolom --}}
             <tr>
                 <td style="padding: 0;">
                 <table width="100%" cellpadding="0" cellspacing="0" border="0">
+
+                    {{-- Row 1: Lokasi | Zona --}}
                     <tr>
                         <td width="50%" style="padding: 12px 12px 12px 20px; border-bottom: 1px solid #f0f0f0; border-right: 1px solid #f0f0f0;">
                             <div style="font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 3px;">Lokasi</div>
@@ -77,6 +87,8 @@
                             <div style="font-size: 14px; font-weight: 600; color: #1a1a1a;">{{ $booking->zone->name ?? '-' }}</div>
                         </td>
                     </tr>
+
+                    {{-- Row 2: Jenis Makam | Lot --}}
                     <tr>
                         <td width="50%" style="padding: 12px 12px 12px 20px; border-bottom: 1px solid #f0f0f0; border-right: 1px solid #f0f0f0;">
                             <div style="font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 3px;">Jenis Makam</div>
@@ -87,6 +99,8 @@
                             <div style="font-size: 14px; font-weight: 600; color: #1a1a1a;">{{ $booking->lot->lot_number ?? '-' }} <span style="font-weight: 400; color: #999;">({{ $booking->lot->size ?? '-' }})</span></div>
                         </td>
                     </tr>
+
+                    {{-- Row 3: Tanggal | Jam --}}
                     <tr>
                         <td width="50%" style="padding: 12px 12px 12px 20px; border-right: 1px solid #f0f0f0;">
                             <div style="font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 3px;">Tanggal</div>
@@ -97,6 +111,7 @@
                             <div style="font-size: 14px; font-weight: 600; color: #1a1a1a;">{{ $start }} – {{ $end }}</div>
                         </td>
                     </tr>
+
                 </table>
                 </td>
             </tr>
@@ -117,36 +132,9 @@
         </td>
     </tr>
 
-    {{-- TAMBAHAN: Notes / Pesan penting --}}
-    <tr>
-        <td style="padding: 24px 0 12px;">
-            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border: 1px solid #e5e5e5; border-radius: 8px; background-color: #fafafa;">
-                <tr>
-                    <td style="padding: 16px 20px;">
-                        <div style="font-size: 12px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px;">Perhatian</div>
-                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                            <tr>
-                                <td valign="top" style="font-size: 13px; color: #555; padding: 3px 0;">&#8226;&nbsp;</td>
-                                <td style="font-size: 13px; color: #555; padding: 3px 0;">Diharap hadir sesuai reservasi untuk kenyamanan selama proses kunjungan.</td>
-                            </tr>
-                            <tr>
-                                <td valign="top" style="font-size: 13px; color: #555; padding: 3px 0;">&#8226;&nbsp;</td>
-                                <td style="font-size: 13px; color: #555; padding: 3px 0;">No Tipping / Pungli.</td>
-                            </tr>
-                            <tr>
-                                <td valign="top" style="font-size: 13px; color: #555; padding: 3px 0;">&#8226;&nbsp;</td>
-                                <td style="font-size: 13px; color: #555; padding: 3px 0;">Silahkan hubungi kami di <strong style="color: #1a1a1a;">0877-8808-8820</strong> (chat only) untuk info dan pengaduan.</td>
-                            </tr>
-                        </table>
-                    </td>
-                </tr>
-            </table>
-        </td>
-    </tr>
-
     {{-- Teks tombol --}}
     <tr>
-        <td style="font-size: 13px; color: #999; padding: 12px 0;">
+        <td style="font-size: 13px; color: #999; padding: 20px 0 12px;">
             Anda bisa melakukan reschedule atau pembatalan melalui link berikut:
         </td>
     </tr>
@@ -170,19 +158,6 @@
                 </td>
             </tr>
         </table>
-        </td>
-    </tr>
-
-    {{-- TAMBAHAN: Penutup --}}
-    <tr>
-        <td style="font-size: 14px; color: #555; padding-top: 28px; border-top: 1px solid #f0f0f0; margin-top: 8px;">
-            Terima kasih atas perhatian dan kepercayaan Bapak/Ibu.
-        </td>
-    </tr>
-    <tr>
-        <td style="padding-top: 8px;">
-            <div style="font-size: 14px; color: #555;">Hormat Kami,</div>
-            <div style="font-size: 15px; font-weight: 600; color: #1a1a1a; margin-top: 2px;">Lestari Memorial Park</div>
         </td>
     </tr>
 
