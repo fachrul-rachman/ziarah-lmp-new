@@ -1,0 +1,407 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1a2744;--navy-hover:#243359;--navy-light:#2d4070;
+  --gold:#C9A84C;--gold-light:rgba(201,168,76,0.18);--gold-border:rgba(201,168,76,0.5);
+  --surface:#ffffff;--surface2:#f7f8fa;
+  --text:#1a2744;--muted:#5a6480;--hint:#9aa0b4;
+  --border:rgba(26,39,68,0.15);--border2:rgba(26,39,68,0.25);
+  --r:10px;--r-sm:8px;
+}
+.wrap{max-width:390px;margin:0 auto;padding:16px 12px 32px;background:var(--surface2)}
+
+/* STEPPER */
+.stepper{display:flex;align-items:center;margin-bottom:14px;padding:0 2px}
+.step-item{display:flex;flex-direction:column;align-items:center;flex-shrink:0;min-width:52px}
+.step-circle{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;border:2px solid transparent;transition:all .2s}
+.step-circle.done{background:var(--navy);color:#fff;border-color:var(--navy)}
+.step-circle.active{background:#fff;color:var(--navy);border-color:var(--navy);box-shadow:0 0 0 3px rgba(26,39,68,0.1)}
+.step-circle.idle{background:#fff;color:var(--hint);border-color:var(--border)}
+.step-label{margin-top:4px;font-size:10px;font-weight:500;text-align:center;max-width:52px;line-height:1.2}
+.step-label.active{color:var(--navy)}
+.step-label.done{color:var(--muted)}
+.step-label.idle{color:var(--hint)}
+.step-line{flex:1;height:2px;margin:0 3px;margin-bottom:14px;border-radius:2px;transition:all .2s}
+.step-line.done{background:var(--navy)}
+.step-line.idle{background:var(--border)}
+
+/* CARD */
+.card{background:var(--surface);border-radius:var(--r);border:2px solid var(--border2);overflow:hidden;position:relative;box-shadow:0 1px 4px rgba(26,39,68,0.06)}
+/* gold top accent */
+.card::before{content:'';display:block;height:3px;background:linear-gradient(90deg,var(--gold),#e8c96e,var(--gold));position:absolute;top:0;left:0;right:0;z-index:1}
+
+.card-header{padding:20px 18px 0;padding-top:24px}
+.card-header h2{font-size:15px;font-weight:500;color:var(--navy)}
+.card-header p{font-size:13px;color:var(--hint);margin-top:3px}
+
+.divider{height:1px;background:var(--border);margin:14px 0 0}
+
+.card-body{padding:16px 18px}
+.space{display:flex;flex-direction:column;gap:14px}
+
+/* LABEL */
+.field-label{display:block;font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--hint);margin-bottom:6px}
+
+/* SELECT & INPUT */
+.inp,select.inp{width:100%;border-radius:var(--r-sm);border:2px solid var(--border);background:var(--surface2);padding:10px 12px;font-size:14px;color:var(--text);outline:none;appearance:none;-webkit-appearance:none;transition:border .15s;font-family:inherit}
+.inp:focus{border-color:var(--navy);background:#fff}
+.sel-wrap{position:relative}
+.sel-wrap select{padding-right:30px}
+.sel-wrap::after{content:'';position:absolute;right:12px;top:50%;transform:translateY(-50%);width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid var(--muted);pointer-events:none}
+
+/* LOCATION CARDS */
+.loc-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.loc-btn{display:flex;align-items:center;gap:10px;border-radius:var(--r-sm);border:2px solid var(--border);padding:12px;background:var(--surface2);text-align:left;cursor:pointer;transition:all .15s;color:var(--text);width:100%}
+.loc-btn:hover{border-color:var(--navy);background:#fff}
+.loc-btn.sel{border-color:var(--navy);background:#fff;box-shadow:0 0 0 3px rgba(26,39,68,0.08)}
+.loc-icon{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;line-height:1}
+.loc-icon.idle{background:#fff;border:2px solid var(--border);color:var(--navy)}
+.loc-icon.sel{background:var(--navy);color:#fff;border:2px solid var(--navy)}
+.loc-name{font-size:13px;font-weight:500;color:var(--text)}
+.loc-check{margin-left:auto;width:16px;height:16px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:9px;color:#fff}
+
+/* CALENDAR */
+.cal-wrap{border-radius:var(--r-sm);border:2px solid var(--border);overflow:hidden}
+.cal-wrap:focus-within{border-color:var(--navy)}
+.cal-header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--navy)}
+.cal-nav{width:28px;height:28px;border-radius:6px;border:1.5px solid rgba(255,255,255,0.25);background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;transition:background .15s}
+.cal-nav:hover{background:rgba(255,255,255,0.15)}
+.cal-title{font-size:13px;font-weight:500;color:#fff}
+.cal-days-header{display:grid;grid-template-columns:repeat(7,1fr);padding:8px 10px 4px;background:var(--surface2)}
+.cal-days-header span{text-align:center;font-size:10px;font-weight:500;color:var(--hint);text-transform:uppercase}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);padding:4px 10px 10px;background:#fff}
+.cal-day{display:flex;align-items:center;justify-content:center;height:32px;border-radius:50%;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;color:var(--text)}
+.cal-day:hover:not(.disabled):not(.selected){background:rgba(26,39,68,0.08)}
+.cal-day.disabled{color:var(--border);cursor:default}
+.cal-day.selected{background:var(--navy);color:#fff}
+.cal-info{padding:8px 12px;background:var(--gold-light);border-top:1.5px solid var(--gold-border);display:flex;align-items:center;gap:6px}
+.cal-info span{font-size:11px;color:#7a5c1a}
+
+/* TIME SLOTS */
+.ts-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.ts-btn{border-radius:var(--r-sm);border:2px solid var(--border);padding:10px 4px;font-size:13px;font-weight:500;background:var(--surface2);color:var(--muted);cursor:pointer;transition:all .15s;text-align:center;font-family:inherit}
+.ts-btn:hover{border-color:var(--navy);color:var(--navy)}
+.ts-btn.sel{background:var(--navy);border-color:var(--navy);color:#fff}
+
+/* LOT */
+.lot-search{position:relative;margin-bottom:8px}
+.lot-search .ico{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--hint);font-size:14px;pointer-events:none}
+.lot-search input{padding-left:30px}
+.lot-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;max-height:140px;overflow-y:auto}
+.lot-btn{border-radius:var(--r-sm);border:2px solid var(--border);padding:8px 4px;font-size:11px;font-family:monospace;font-weight:500;background:var(--surface2);color:var(--muted);cursor:pointer;transition:all .15s;text-align:center}
+.lot-btn:hover{border-color:var(--navy);color:var(--navy)}
+.lot-btn.sel{background:var(--navy);border-color:var(--navy);color:#fff}
+.lot-badge{font-size:10px;font-weight:500;color:var(--gold);background:var(--gold-light);border:1.5px solid var(--gold-border);border-radius:20px;padding:2px 8px}
+.row-between{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+
+/* COUNTER */
+.counter-list{border-radius:var(--r-sm);border:2px solid var(--border);overflow:hidden}
+.counter-row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#fff;border-bottom:1.5px solid var(--border)}
+.counter-row:last-child{border-bottom:none}
+.counter-label{font-size:13px;font-weight:500;color:var(--text)}
+.counter-hint{font-size:11px;color:var(--hint);margin-top:2px}
+.counter-ctrl{display:flex;align-items:center;border:2px solid var(--border);border-radius:8px;overflow:hidden}
+.counter-btn{width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:var(--surface2);color:var(--muted);cursor:pointer;font-size:18px;transition:all .15s;border:none;font-weight:300;line-height:1}
+.counter-btn:hover:not(:disabled){background:var(--navy);color:#fff}
+.counter-btn:disabled{opacity:.3;cursor:default}
+.counter-val{width:34px;text-align:center;font-size:13px;font-weight:500;color:var(--text);background:#fff;padding:8px 0;border-left:1.5px solid var(--border);border-right:1.5px solid var(--border)}
+
+/* TOGGLE */
+.toggle-list{display:flex;flex-direction:column;gap:6px}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:var(--r-sm);border:2px solid var(--border);background:var(--surface2);cursor:pointer;transition:all .15s}
+.toggle-row:hover{border-color:var(--navy)}
+.toggle-row.on{border-color:var(--navy);background:#fff}
+.toggle-label{font-size:13px;font-weight:500;color:var(--text)}
+.toggle-switch{width:38px;height:20px;border-radius:10px;position:relative;transition:background .2s;flex-shrink:0}
+.toggle-switch.off{background:var(--border2)}
+.toggle-switch.on{background:var(--navy)}
+.toggle-knob{position:absolute;top:2px;width:16px;height:16px;background:#fff;border-radius:50%;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle-knob.off{left:2px}
+.toggle-knob.on{left:20px}
+
+/* GOLD accent strip on toggle-on */
+.toggle-row.on .toggle-label{color:var(--navy)}
+
+/* SUMMARY */
+.summary{border-radius:var(--r-sm);border:2px solid var(--border);overflow:hidden}
+.summary-head{padding:9px 14px;background:var(--navy);border-bottom:2px solid var(--gold-border)}
+.summary-head p{font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,0.7)}
+.summary-head p span{color:var(--gold)}
+.summary-row{display:flex;align-items:flex-start;padding:9px 14px;border-top:1.5px solid var(--border);gap:10px;background:#fff}
+.summary-row:first-child{border-top:none}
+.summary-key{width:58px;flex-shrink:0;font-size:12px;color:var(--hint);margin-top:1px}
+.summary-val{font-size:13px;font-weight:500;color:var(--text)}
+
+/* FORM */
+.form-group{display:flex;flex-direction:column;gap:4px}
+
+/* CONFIRM BTN */
+.btn-confirm{width:100%;border-radius:var(--r-sm);background:var(--navy);border:none;padding:13px;font-size:14px;font-weight:500;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s;margin-top:4px;font-family:inherit;border:2px solid var(--navy)}
+.btn-confirm:hover{background:var(--navy-hover)}
+.btn-confirm:active{transform:scale(.98)}
+
+/* NAV */
+.nav-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-top:2px solid var(--border);background:var(--surface2)}
+.btn-back{display:inline-flex;align-items:center;gap:5px;border-radius:var(--r-sm);border:2px solid var(--border2);background:#fff;padding:8px 14px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .15s;font-family:inherit}
+.btn-back:hover:not(:disabled){border-color:var(--navy);color:var(--navy)}
+.btn-back:disabled{opacity:.35;cursor:default}
+.btn-next{display:inline-flex;align-items:center;gap:5px;border-radius:var(--r-sm);background:var(--navy);border:2px solid var(--navy);padding:8px 18px;font-size:13px;font-weight:500;color:#fff;cursor:pointer;transition:all .15s;font-family:inherit}
+.btn-next:hover{background:var(--navy-hover);border-color:var(--navy-hover)}
+.btn-next:active{transform:scale(.98)}
+
+/* HINT BOX */
+.hint-box{display:flex;align-items:flex-start;gap:8px;background:var(--surface2);border:2px solid var(--border);border-radius:var(--r-sm);padding:10px 12px}
+.hint-box p{font-size:13px;color:var(--muted)}
+</style>
+
+<div class="wrap">
+<div class="stepper" id="stepper"></div>
+<div class="card">
+  <div id="card-content"></div>
+  <div class="nav-bar">
+    <button class="btn-back" id="btn-back" onclick="prevStep()">
+      ← Kembali
+    </button>
+    <button class="btn-next" id="btn-next" onclick="nextStep()">
+      Lanjut →
+    </button>
+  </div>
+</div>
+</div>
+
+<script>
+const STEPS=['Lokasi','Zona & Lot','Fasilitas','Data Diri'];
+let state={
+  step:1,activity_type:'ziarah',location_id:null,zone_id:null,lot_id:null,
+  booking_date:null,time_slot_id:null,tent_count:0,chair_count:5,
+  burn_barrel_count:0,prayer_table:false,lamp:false,
+  name:'',relationship:'',email:'',phone:'',
+  cal_year:2026,cal_month:4,lot_search:''
+};
+
+const LOCS=[{id:1,name:'Blok Utara'},{id:2,name:'Blok Selatan'},{id:3,name:'Blok Timur'},{id:4,name:'Bukit Damai'}];
+const ZONES={1:[{id:1,name:'Zona A'},{id:2,name:'Zona B'}],2:[{id:3,name:'Zona C'},{id:4,name:'Zona D'}],3:[{id:5,name:'Zona E'}],4:[{id:6,name:'Zona F'},{id:7,name:'Zona G'}]};
+const SLOTS=[{id:1,s:'07:00',e:'09:00'},{id:2,s:'09:00',e:'11:00'},{id:3,s:'11:00',e:'13:00'},{id:4,s:'13:00',e:'15:00'},{id:5,s:'15:00',e:'17:00'}];
+const LOTS=Array.from({length:20},(_,i)=>({id:i+1,number:'L-'+(i+1).toString().padStart(3,'0')}));
+const MONTHS=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+const RELS=['Suami','Istri','Anak','Kakak','Adik','Ipar','Mertua','Menantu','Paman','Bibi'];
+
+function renderStepper(){
+  const s=document.getElementById('stepper');
+  let h='';
+  STEPS.forEach((label,i)=>{
+    const n=i+1;
+    const cls=n<state.step?'done':n===state.step?'active':'idle';
+    const inner=n<state.step?'✓':n;
+    h+=`<div class="step-item"><div class="step-circle ${cls}">${inner}</div><div class="step-label ${cls}">${label}</div></div>`;
+    if(n<STEPS.length) h+=`<div class="step-line ${n<state.step?'done':'idle'}"></div>`;
+  });
+  s.innerHTML=h;
+}
+
+function renderCal(){
+  const yr=state.cal_year,mo=state.cal_month;
+  const firstDay=new Date(yr,mo,1).getDay();
+  const lead=(firstDay+6)%7;
+  const total=new Date(yr,mo+1,0).getDate();
+  const today=new Date();today.setHours(0,0,0,0);
+  const minDate=new Date(today);minDate.setDate(today.getDate()+2);
+  let cells='';
+  for(let i=0;i<lead;i++) cells+='<div></div>';
+  for(let d=1;d<=total;d++){
+    const dt=new Date(yr,mo,d);
+    const ymd=`${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dis=dt<minDate;
+    const sel=state.booking_date===ymd;
+    cells+=`<div class="cal-day${dis?' disabled':''}${sel?' selected':''}" ${!dis?`onclick="selectDate('${ymd}')"`:''} >${d}</div>`;
+  }
+  return `<div class="cal-wrap">
+    <div class="cal-header">
+      <button class="cal-nav" onclick="calPrev()">‹</button>
+      <span class="cal-title">${MONTHS[mo]} ${yr}</span>
+      <button class="cal-nav" onclick="calNext()">›</button>
+    </div>
+    <div class="cal-days-header">${['Sen','Sel','Rab','Kam','Jum','Sab','Min'].map(d=>`<span>${d}</span>`).join('')}</div>
+    <div class="cal-grid">${cells}</div>
+    <div class="cal-info">
+      <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style="flex-shrink:0"><circle cx="7" cy="7" r="6" stroke="#C9A84C" stroke-width="1.5"/><path d="M7 4.5v3.5M7 9.5v.3" stroke="#C9A84C" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span>Minimal pemesanan H+2 dari hari ini</span>
+    </div>
+  </div>`;
+}
+
+function renderStep1(){
+  const locCards=LOCS.map(l=>{
+    const s=state.location_id===l.id;
+    return `<button class="loc-btn ${s?'sel':''}" onclick="selectLoc(${l.id})">
+      <div class="loc-icon ${s?'sel':'idle'}">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" style="display:block">
+          <path d="M8 1.5C5.515 1.5 3.5 3.515 3.5 6c0 3.375 4.5 9.5 4.5 9.5S12.5 9.375 12.5 6c0-2.485-2.015-4.5-4.5-4.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          <circle cx="8" cy="6" r="1.5" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <span class="loc-name">${l.name}</span>
+      ${s?`<div class="loc-check" style="margin-left:auto">
+        <svg width="8" height="8" viewBox="0 0 9 9" fill="none"><path d="M1.5 4.5l2.5 2.5 3.5-4" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>`:''}
+    </button>`;
+  }).join('');
+  return `
+  <div class="card-header"><h2>Pilih Lokasi</h2><p>Pilih area pemakaman yang ingin dikunjungi</p></div>
+  <div class="divider"></div>
+  <div class="card-body"><div class="space">
+    <div>
+      <label class="field-label">Jenis kegiatan</label>
+      <div class="sel-wrap">
+        <select class="inp" onchange="state.activity_type=this.value">
+          <option value="ziarah" ${state.activity_type==='ziarah'?'selected':''}>Ziarah</option>
+          <option value="naik_batu" ${state.activity_type==='naik_batu'?'selected':''}>Naik Batu</option>
+          <option value="start_work" ${state.activity_type==='start_work'?'selected':''}>Start Work</option>
+          <option value="wang_san" ${state.activity_type==='wang_san'?'selected':''}>Wang San</option>
+        </select>
+      </div>
+    </div>
+    <div>
+      <label class="field-label">Lokasi pemakaman</label>
+      <div class="loc-grid">${locCards}</div>
+    </div>
+  </div></div>`;
+}
+
+function renderStep2(){
+  const zones=(state.location_id?ZONES[state.location_id]:[])||[];
+  const zonesOpts=zones.map(z=>`<option value="${z.id}" ${state.zone_id===z.id?'selected':''}>${z.name}</option>`).join('');
+  const slots=SLOTS.map(ts=>{
+    const s=state.time_slot_id===ts.id;
+    return `<button class="ts-btn ${s?'sel':''}" onclick="selectSlot(${ts.id})">${ts.s}</button>`;
+  }).join('');
+  const filtered=LOTS.filter(l=>!state.lot_search||l.number.toLowerCase().includes(state.lot_search.toLowerCase()));
+  const lotBtns=filtered.map(l=>{
+    const s=state.lot_id===l.id;
+    return `<button class="lot-btn ${s?'sel':''}" onclick="state.lot_id=${l.id};render()">${l.number}</button>`;
+  }).join('');
+  const lotSection=(state.zone_id&&state.booking_date&&state.time_slot_id)
+    ?`<div class="row-between"><label class="field-label" style="margin:0">Nomor lot</label><span class="lot-badge">${filtered.length} tersedia</span></div>
+      <div class="lot-search"><svg class="ico" width="13" height="13" viewBox="0 0 15 15" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 10.5l2.5 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <input class="inp" placeholder="Cari nomor lot..." value="${state.lot_search}" oninput="state.lot_search=this.value;render()">
+      </div>
+      <div class="lot-grid">${lotBtns||'<p style="font-size:13px;color:var(--hint);grid-column:1/-1;padding:8px">Tidak ditemukan.</p>'}</div>`
+    :`<div><label class="field-label">Nomor lot</label>
+      <div class="hint-box"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.4"/><path d="M7 4.5v3.5M7 9.5v.3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg><p>Pilih zona, tanggal, dan jam terlebih dahulu.</p></div></div>`;
+  return `
+  <div class="card-header"><h2>Zona, Tanggal &amp; Lot</h2><p>Tentukan zona, waktu, dan lot yang tersedia</p></div>
+  <div class="divider"></div>
+  <div class="card-body"><div class="space">
+    <div>
+      <label class="field-label">Zona</label>
+      <div class="sel-wrap">
+        <select class="inp" onchange="state.zone_id=Number(this.value)||null;state.lot_id=null;render()">
+          <option value="">Pilih zona...</option>${zonesOpts}
+        </select>
+      </div>
+    </div>
+    <div><label class="field-label">Tanggal kunjungan</label>${renderCal()}</div>
+    <div><label class="field-label">Jam kunjungan</label><div class="ts-grid">${slots}</div></div>
+    ${lotSection}
+  </div></div>`;
+}
+
+function renderStep3(){
+  const counters=[
+    {label:'Kursi',hint:'Min 5 — Maks 10',prop:'chair_count',min:5,max:10},
+    {label:'Tong Bakar',hint:'Min 0 — Maks 2',prop:'burn_barrel_count',min:0,max:2},
+  ];
+  const cRows=counters.map(c=>`
+    <div class="counter-row">
+      <div><div class="counter-label">${c.label}</div><div class="counter-hint">${c.hint}</div></div>
+      <div class="counter-ctrl">
+        <button class="counter-btn" ${state[c.prop]<=c.min?'disabled':''} onclick="adj('${c.prop}',${c.min},${c.max},-1)">−</button>
+        <div class="counter-val">${state[c.prop]}</div>
+        <button class="counter-btn" ${state[c.prop]>=c.max?'disabled':''} onclick="adj('${c.prop}',${c.min},${c.max},1)">+</button>
+      </div>
+    </div>`).join('');
+  const toggles=[
+    {label:'Tenda',prop:'tent_count',val:state.tent_count>0},
+    {label:'Meja Sembayang',prop:'prayer_table',val:state.prayer_table},
+    {label:'Lampu',prop:'lamp',val:state.lamp},
+  ];
+  const tRows=toggles.map(t=>`
+    <div class="toggle-row ${t.val?'on':''}" onclick="toggleProp('${t.prop}')">
+      <span class="toggle-label">${t.label}</span>
+      <div class="toggle-switch ${t.val?'on':'off'}"><div class="toggle-knob ${t.val?'on':'off'}"></div></div>
+    </div>`).join('');
+  return `
+  <div class="card-header"><h2>Fasilitas</h2><p>Pilih fasilitas yang Anda butuhkan</p></div>
+  <div class="divider"></div>
+  <div class="card-body"><div class="space">
+    <div><label class="field-label">Jumlah item</label><div class="counter-list">${cRows}</div></div>
+    <div><label class="field-label">Perlengkapan tambahan</label><div class="toggle-list">${tRows}</div></div>
+  </div></div>`;
+}
+
+function renderStep4(){
+  const loc=LOCS.find(l=>l.id===state.location_id);
+  const zones=state.location_id?(ZONES[state.location_id]||[]):[];
+  const zn=zones.find(z=>z.id===state.zone_id);
+  const lt=LOTS.find(l=>l.id===state.lot_id);
+  const ts=SLOTS.find(s=>s.id===state.time_slot_id);
+  const relOpts=RELS.map(r=>`<option value="${r}" ${state.relationship===r?'selected':''}>${r}</option>`).join('');
+  const summaryRows=[
+    ['Lokasi',loc?.name||'—'],['Zona',zn?.name||'—'],['Lot',lt?.number||'—'],
+    ['Tanggal',state.booking_date||'—'],['Jam',ts?`${ts.s} – ${ts.e}`:'—'],
+    ['Hubungan',state.relationship||'—'],
+  ].map(([k,v])=>`<div class="summary-row"><span class="summary-key">${k}</span><span class="summary-val">${v}</span></div>`).join('');
+  return `
+  <div class="card-header"><h2>Data Diri</h2><p>Isi informasi kontak untuk konfirmasi booking</p></div>
+  <div class="divider"></div>
+  <div class="card-body"><div class="space">
+    <div class="form-group"><label class="field-label">Nama lengkap</label>
+      <input class="inp" type="text" placeholder="cth. Budi Santoso" value="${state.name}" oninput="state.name=this.value"></div>
+    <div class="form-group"><label class="field-label">Hubungan dengan Almarhum/ah</label>
+      <div class="sel-wrap"><select class="inp" onchange="state.relationship=this.value"><option value="">Pilih hubungan</option>${relOpts}</select></div></div>
+    <div class="form-group"><label class="field-label">Alamat email</label>
+      <input class="inp" type="email" placeholder="cth. budi@email.com" value="${state.email}" oninput="state.email=this.value"></div>
+    <div class="form-group"><label class="field-label">Nomor HP</label>
+      <input class="inp" type="text" placeholder="cth. 0812-3456-7890" value="${state.phone}" oninput="state.phone=this.value"></div>
+    <div class="summary">
+      <div class="summary-head"><p>Ringkasan <span>Booking</span></p></div>
+      ${summaryRows}
+      <div class="summary-row"><span class="summary-key">Fasilitas</span>
+        <span style="font-size:12px;color:var(--muted);line-height:1.6">Tenda ${state.tent_count>0?'Ya':'Tidak'} · Kursi ${state.chair_count} · Tong ${state.burn_barrel_count}<br>Meja: ${state.prayer_table?'Ya':'Tidak'} · Lampu: ${state.lamp?'Ya':'Tidak'}</span></div>
+    </div>
+    <button class="btn-confirm" onclick="alert('Booking berhasil dikirim!')">
+      Konfirmasi &amp; Kirim Booking
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2.5 8h11M8 2.5l5.5 5.5L8 13.5" stroke="white" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div></div>`;
+}
+
+function render(){
+  renderStepper();
+  const content=document.getElementById('card-content');
+  if(state.step===1) content.innerHTML=renderStep1();
+  else if(state.step===2) content.innerHTML=renderStep2();
+  else if(state.step===3) content.innerHTML=renderStep3();
+  else content.innerHTML=renderStep4();
+  document.getElementById('btn-back').disabled=state.step===1;
+  const next=document.getElementById('btn-next');
+  if(state.step===4){next.style.display='none';}
+  else{next.style.display='inline-flex';}
+}
+
+function nextStep(){if(state.step<4){state.step++;render();}}
+function prevStep(){if(state.step>1){state.step--;render();}}
+function selectLoc(id){state.location_id=id;state.zone_id=null;state.lot_id=null;render();}
+function selectDate(ymd){state.booking_date=ymd;state.lot_id=null;render();}
+function selectSlot(id){state.time_slot_id=id;state.lot_id=null;render();}
+function calPrev(){const d=new Date(state.cal_year,state.cal_month-1,1);state.cal_year=d.getFullYear();state.cal_month=d.getMonth();render();}
+function calNext(){const d=new Date(state.cal_year,state.cal_month+1,1);state.cal_year=d.getFullYear();state.cal_month=d.getMonth();render();}
+function adj(prop,min,max,delta){state[prop]=Math.min(max,Math.max(min,state[prop]+delta));render();}
+function toggleProp(prop){
+  if(prop==='tent_count')state.tent_count=state.tent_count>0?0:1;
+  else state[prop]=!state[prop];
+  render();
+}
+render();
+</script>
