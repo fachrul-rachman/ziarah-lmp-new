@@ -134,7 +134,7 @@
 
     {{-- Teks tombol --}}
     <tr>
-        <td style="font-size: 13px; color: #999; padding: 20px 0 12px;">
+        <td style="font-size: 15px; color: #555; padding: 20px 0 12px;">
             <strong>Notes:</strong><br><br>
             - Diharap hadir sesuai reservasi untuk kenyamanan selama proses kunjungan.<br>
             - No Tipping/ Pungli.<br>
