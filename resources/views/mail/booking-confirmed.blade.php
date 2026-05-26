@@ -44,8 +44,8 @@
     {{-- Salam --}}
     <tr>
         <td style="font-size: 15px; color: #555; padding-bottom: 24px;">
-            Hai <strong style="color: #1a1a1a;">{{ $booking->customer_name }}</strong>,
-            pemesanan Anda sudah berhasil dibuat.
+            Salam Sejahtera Bapak/Ibu <strong style="color: #1a1a1a;">{{ $booking->customer_name }}</strong>,<br>
+            Berikut konfirmasi detail Ziarah:
         </td>
     </tr>
 
@@ -135,7 +135,14 @@
     {{-- Teks tombol --}}
     <tr>
         <td style="font-size: 13px; color: #999; padding: 20px 0 12px;">
-            Anda bisa melakukan reschedule atau pembatalan melalui link berikut:
+            <strong>Notes:</strong><br><br>
+            - Diharap hadir sesuai reservasi untuk kenyamanan selama proses kunjungan.<br>
+            - No Tipping/ Pungli.<br>
+            - Silahkan hubungi kami di 0877-8808-8820 (chat only) untuk info dan pengaduan.<br><br>
+            Terima kasih perhatian dan kepercayaan Bapak/Ibu.<br><br>
+            Hormat Kami,<br>
+            <strong>Lestari Memorial Park</strong><br><br>
+            Reschedule atau pembatalan:
         </td>
     </tr>
 

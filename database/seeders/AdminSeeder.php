@@ -10,15 +10,29 @@ class AdminSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('users')->updateOrInsert(
-            ['email' => 'admin@ziarah.test'],
+        $users = [
             [
-                'name' => 'Admin',
-                'password' => Hash::make('password'),
-                'created_at' => now(),
-                'updated_at' => now(),
+                'email' => 'xxxx',
+                'name' => 'xxxx',
+                'password' => 'xxxx',
             ],
-        );
+            [
+                'email' => 'xxx',
+                'name' => 'xxx',
+                'password' => 'xxxx',
+            ],
+        ];
+
+        foreach ($users as $user) {
+            DB::table('users')->updateOrInsert(
+                ['email' => $user['email']],
+                [
+                    'name' => $user['name'],
+                    'password' => Hash::make($user['password']),
+                    'updated_at' => now(),
+                    'created_at' => now(),
+                ]
+            );
+        }
     }
 }
-
