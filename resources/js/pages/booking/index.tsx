@@ -1,5 +1,8 @@
 import { Head, useForm, usePage } from "@inertiajs/react"
 import * as React from "react"
+import { IconMapPin } from "@tabler/icons-react"
+import { IconSearch } from "@tabler/icons-react"
+
 
 type Location = { id: number; name: string }
 type TimeSlot = { id: number; start_time: string; end_time: string }
@@ -650,19 +653,16 @@ export default function BookingIndex() {
                             className={`loc-btn ${selected ? "sel" : ""}`}
                             onClick={() => selectLocation(l.id)}
                           >
-                            <div className={`loc-icon ${selected ? "sel" : ""}`}>⌂</div>
+                            <div className={`loc-icon ${selected ? "sel" : ""}`}>
+                              <IconMapPin size={20} />
+                            </div>
                             <span className="loc-name">{l.name}</span>
-                            {selected ? (
-                              <div className="loc-check" aria-hidden>
-                                ✓
-                              </div>
-                            ) : null}
                           </button>
                         )
                       })}
                     </div>
                     {errors.location_id ? (
-                      <p style={{ marginTop: 6, fontSize: 12, color: "#b42318" }}>
+                      <p style={{ marginTop: 6, fontSize: 12, color: "var(--color-text-danger)" }}>
                         {errors.location_id}
                       </p>
                     ) : null}
@@ -703,7 +703,7 @@ export default function BookingIndex() {
                     </div>
                     <div className="search-row">
                       <div className="search-input" style={{ flex: 1 }}>
-                        <span style={{ color: "var(--muted)", fontSize: 12 }}>⌕</span>
+                        <IconSearch size={14} color="var(--muted)" />
                         <input
                           value={state.zone_search}
                           onChange={(e) =>
@@ -737,7 +737,7 @@ export default function BookingIndex() {
                       )}
                     </div>
                     {errors.zone_id ? (
-                      <p style={{ marginTop: 6, fontSize: 12, color: "#b42318" }}>
+                      <p style={{ marginTop: 6, fontSize: 12, color: "var(--color-text-danger)" }}>
                         {errors.zone_id}
                       </p>
                     ) : null}
@@ -747,7 +747,7 @@ export default function BookingIndex() {
                     <label className="field-label">Tanggal kunjungan</label>
                     {renderCalendar()}
                     {errors.visit_date ? (
-                      <p style={{ marginTop: 6, fontSize: 12, color: "#b42318" }}>
+                      <p style={{ marginTop: 6, fontSize: 12, color: "var(--color-text-danger)" }}>
                         {errors.visit_date}
                       </p>
                     ) : null}
@@ -772,7 +772,7 @@ export default function BookingIndex() {
                       })}
                     </div>
                     {errors.time_slot_id ? (
-                      <p style={{ marginTop: 6, fontSize: 12, color: "#b42318" }}>
+                      <p style={{ marginTop: 6, fontSize: 12, color: "var(--color-text-danger)" }}>
                         {errors.time_slot_id}
                       </p>
                     ) : null}
@@ -795,7 +795,7 @@ export default function BookingIndex() {
                       <>
                         <div className="search-row" style={{ marginTop: 8 }}>
                           <div className="search-input" style={{ flex: 1 }}>
-                            <span style={{ color: "var(--muted)", fontSize: 12 }}>⌕</span>
+                            <IconSearch size={14} color="var(--muted)" />
                             <input
                               value={state.lot_search}
                               onChange={(e) =>
@@ -830,7 +830,7 @@ export default function BookingIndex() {
                       </>
                     )}
                     {errors.lot_id ? (
-                      <p style={{ marginTop: 6, fontSize: 12, color: "#b42318" }}>
+                      <p style={{ marginTop: 6, fontSize: 12, color: "var(--color-text-danger)" }}>
                         {errors.lot_id}
                       </p>
                     ) : null}
@@ -1012,7 +1012,7 @@ export default function BookingIndex() {
                       onChange={(e) => setState((p) => ({ ...p, name: e.target.value }))}
                     />
                     {errors.customer_name ? (
-                      <p style={{ marginTop: 6, fontSize: 12, color: "#b42318" }}>
+                      <p style={{ marginTop: 6, fontSize: 12, color: "var(--color-text-danger)" }}>
                         {errors.customer_name}
                       </p>
                     ) : null}
@@ -1027,7 +1027,7 @@ export default function BookingIndex() {
                       onChange={(e) => setState((p) => ({ ...p, email: e.target.value }))}
                     />
                     {errors.customer_email ? (
-                      <p style={{ marginTop: 6, fontSize: 12, color: "#b42318" }}>
+                      <p style={{ marginTop: 6, fontSize: 12, color: "var(--color-text-danger)" }}>
                         {errors.customer_email}
                       </p>
                     ) : null}
@@ -1042,7 +1042,7 @@ export default function BookingIndex() {
                       onChange={(e) => setState((p) => ({ ...p, phone: e.target.value }))}
                     />
                     {errors.customer_phone ? (
-                      <p style={{ marginTop: 6, fontSize: 12, color: "#b42318" }}>
+                      <p style={{ marginTop: 6, fontSize: 12, color: "var(--color-text-danger)" }}>
                         {errors.customer_phone}
                       </p>
                     ) : null}
