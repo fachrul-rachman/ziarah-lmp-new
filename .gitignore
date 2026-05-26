@@ -26,7 +26,5 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
-/adminSeeder.php
-/DatabaseSeeder.php
-/DummyDataSeeder.php
-/LotCsvSeeder.php
+/database/seeders/data/*.csv
+/.md/
