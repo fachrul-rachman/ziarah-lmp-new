@@ -31,7 +31,8 @@ class ProcessBookingExportJob implements ShouldQueue
         ]);
 
         try {
-            $filePath = $service->exportBookings($exportJob->format, (array) $exportJob->filters_json);
+            $disk = $exportJob->disk ?: (config('exports.disk') ?? config('filesystems.default'));
+            $filePath = $service->exportBookings($exportJob->format, (array) $exportJob->filters_json, $disk);
             $exportJob->update([
                 'status' => 'completed',
                 'file_path' => $filePath,
@@ -47,4 +48,3 @@ class ProcessBookingExportJob implements ShouldQueue
         }
     }
 }
-

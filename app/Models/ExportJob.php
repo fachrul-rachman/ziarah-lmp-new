@@ -9,6 +9,7 @@ class ExportJob extends Model
     protected $fillable = [
         'status',
         'format',
+        'disk',
         'filters_json',
         'file_path',
         'error_message',
@@ -22,4 +23,3 @@ class ExportJob extends Model
         'finished_at' => 'datetime',
     ];
 }
-

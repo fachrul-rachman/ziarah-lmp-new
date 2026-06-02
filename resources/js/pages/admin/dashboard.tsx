@@ -56,7 +56,8 @@ function labelStatus(v: string) {
 export default function AdminDashboard() {
   const page = usePage<{
     filters: {
-      date?: string
+      date_from?: string
+      date_to?: string
       activity_type?: string
       location_id?: number
       zone_id?: number
@@ -85,7 +86,8 @@ export default function AdminDashboard() {
   const initialFilters = page.props.filters ?? {}
 
   const [filters, setFilters] = React.useState({
-    date: initialFilters.date ?? "",
+    date_from: initialFilters.date_from ?? "",
+    date_to: initialFilters.date_to ?? "",
     activity_type: initialFilters.activity_type ?? "",
     location_id: initialFilters.location_id ? String(initialFilters.location_id) : "",
     zone_id: initialFilters.zone_id ? String(initialFilters.zone_id) : "",
@@ -124,7 +126,8 @@ export default function AdminDashboard() {
 
   function applyFilters() {
     const params: Record<string, string> = {}
-    if (filters.date) params.date = filters.date
+    if (filters.date_from) params.date_from = filters.date_from
+    if (filters.date_to) params.date_to = filters.date_to
     if (filters.activity_type) params.activity_type = filters.activity_type
     if (filters.location_id) params.location_id = filters.location_id
     if (filters.zone_id) params.zone_id = filters.zone_id
@@ -133,13 +136,14 @@ export default function AdminDashboard() {
   }
 
   function resetFilters() {
-    setFilters({ date: "", activity_type: "", location_id: "", zone_id: "", status: "" })
+    setFilters({ date_from: "", date_to: "", activity_type: "", location_id: "", zone_id: "", status: "" })
     router.get("/admin/dashboard", {}, { preserveScroll: true })
   }
 
   function doExport() {
     const payload: Record<string, string> = { format: exportFormat }
-    if (filters.date) payload.date = filters.date
+    if (filters.date_from) payload.date_from = filters.date_from
+    if (filters.date_to) payload.date_to = filters.date_to
     if (filters.activity_type) payload.activity_type = filters.activity_type
     if (filters.location_id) payload.location_id = filters.location_id
     if (filters.zone_id) payload.zone_id = filters.zone_id
@@ -158,13 +162,21 @@ export default function AdminDashboard() {
               <CardTitle>Filter</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-3 md:grid-cols-5">
+              <div className="grid gap-3 md:grid-cols-6">
                 <div>
-                  <label className="mb-1 block text-sm font-medium">Tanggal</label>
+                  <label className="mb-1 block text-sm font-medium">Tanggal dari</label>
                   <Input
                     type="date"
-                    value={filters.date}
-                    onChange={(e) => setFilters((p) => ({ ...p, date: e.target.value }))}
+                    value={filters.date_from}
+                    onChange={(e) => setFilters((p) => ({ ...p, date_from: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium">Tanggal sampai</label>
+                  <Input
+                    type="date"
+                    value={filters.date_to}
+                    onChange={(e) => setFilters((p) => ({ ...p, date_to: e.target.value }))}
                   />
                 </div>
                 <div>
@@ -227,7 +239,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              {errors.date || errors.activity_type || errors.location_id || errors.zone_id || errors.status ? (
+              {errors.date_from || errors.date_to || errors.activity_type || errors.location_id || errors.zone_id || errors.status ? (
                 <p className="mt-2 text-sm text-red-600">Filter tidak valid.</p>
               ) : null}
 

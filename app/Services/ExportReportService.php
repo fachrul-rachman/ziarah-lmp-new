@@ -13,29 +13,44 @@ class ExportReportService
     /**
      * @param array<string,mixed> $filters
      */
-    public function exportBookings(string $format, array $filters): string
+    public function exportBookings(string $format, array $filters, ?string $disk = null): string
     {
+        $disk = $disk ?: (config('exports.disk') ?? config('filesystems.default'));
+        $storage = Storage::disk($disk);
+
         [$rows, $minDate, $maxDate] = $this->queryRows($filters);
 
+        // Prefer explicitly requested range for export labels / headers.
+        $labelFrom = ! empty($filters['date_from']) ? (string) $filters['date_from'] : null;
+        $labelTo = ! empty($filters['date_to']) ? (string) $filters['date_to'] : null;
+        $exportMinDate = $labelFrom ?? $minDate;
+        $exportMaxDate = $labelTo ?? $maxDate;
+
         $dir = 'exports';
-        Storage::makeDirectory($dir);
+        $storage->makeDirectory($dir);
 
         $stamp = now()->format('Ymd_His');
         $base = "booking_export_{$stamp}";
 
         if ($format === 'excel') {
             $path = "{$dir}/{$base}.xlsx";
-            Excel::store(new AdminBookingExport($rows, $minDate, $maxDate), $path);
+            $ok = Excel::store(new AdminBookingExport($rows, $exportMinDate, $exportMaxDate), $path, $disk);
+            if (! $ok) {
+                throw new \RuntimeException('Gagal menyimpan file export Excel.');
+            }
             return $path;
         }
 
         $path = "{$dir}/{$base}.pdf";
         $pdf = Pdf::loadView('pdf.admin-bookings-export', [
             'rows' => $rows,
-            'minDate' => $minDate,
-            'maxDate' => $maxDate,
+            'minDate' => $exportMinDate,
+            'maxDate' => $exportMaxDate,
         ])->setPaper('a4', 'landscape');
-        Storage::put($path, $pdf->output());
+        $ok = $storage->put($path, $pdf->output());
+        if (! $ok) {
+            throw new \RuntimeException('Gagal menyimpan file export PDF.');
+        }
         return $path;
     }
 
@@ -66,8 +81,11 @@ class ExportReportService
                 'facilities:booking_id,chairs_count,burn_barrels_count,has_tent,has_prayer_table,has_lamp',
             ]);
 
-        if (! empty($filters['date'])) {
-            $q->whereDate('visit_date', $filters['date']);
+        if (! empty($filters['date_from'])) {
+            $q->whereDate('visit_date', '>=', $filters['date_from']);
+        }
+        if (! empty($filters['date_to'])) {
+            $q->whereDate('visit_date', '<=', $filters['date_to']);
         }
         if (! empty($filters['activity_type'])) {
             $q->where('activity_type', $filters['activity_type']);

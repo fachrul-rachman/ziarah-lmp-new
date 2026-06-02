@@ -22,7 +22,8 @@ class AdminDashboardController extends Controller
     public function index(Request $request): Response
     {
         $filters = $request->validate([
-            'date' => ['nullable', 'date'],
+            'date_from' => ['nullable', 'date', 'before_or_equal:date_to'],
+            'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
             'activity_type' => ['nullable', 'string', 'in:ziarah,naik_batu,start_work,wang_san'],
             'location_id' => ['nullable', 'integer', 'exists:locations,id'],
             'zone_id' => ['nullable', 'integer', 'exists:zones,id'],
@@ -34,8 +35,11 @@ class AdminDashboardController extends Controller
             ->orderByDesc('visit_date')
             ->orderByDesc('id');
 
-        if (! empty($filters['date'])) {
-            $q->whereDate('visit_date', $filters['date']);
+        if (! empty($filters['date_from'])) {
+            $q->whereDate('visit_date', '>=', $filters['date_from']);
+        }
+        if (! empty($filters['date_to'])) {
+            $q->whereDate('visit_date', '<=', $filters['date_to']);
         }
         if (! empty($filters['activity_type'])) {
             $q->where('activity_type', $filters['activity_type']);
@@ -165,16 +169,22 @@ class AdminDashboardController extends Controller
     {
         $validated = $request->validate([
             'format' => ['required', 'string', 'in:excel,pdf'],
-            'date' => ['nullable', 'date'],
+            'date_from' => ['nullable', 'date', 'before_or_equal:date_to'],
+            'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
             'activity_type' => ['nullable', 'string', 'in:ziarah,naik_batu,start_work,wang_san'],
             'location_id' => ['nullable', 'integer', 'exists:locations,id'],
             'zone_id' => ['nullable', 'integer', 'exists:zones,id'],
             'status' => ['nullable', 'string', 'in:confirmed,rescheduled,cancelled,completed'],
         ]);
 
+        $disk = (string) (config('exports.disk') ?? config('filesystems.default'));
+        $connection = (string) (config('exports.queue_connection') ?? (app()->environment('local') ? 'sync' : config('queue.default')));
+        $queue = (string) (config('exports.queue') ?? 'exports');
+
         $exportJob = ExportJob::query()->create([
             'status' => 'queued',
             'format' => $validated['format'],
+            'disk' => $disk,
             'filters_json' => collect($validated)->except('format')->toArray(),
             'file_path' => null,
             'error_message' => null,
@@ -182,7 +192,13 @@ class AdminDashboardController extends Controller
             'finished_at' => null,
         ]);
 
-        ProcessBookingExportJob::dispatch($exportJob->id);
+        if ($connection === 'sync') {
+            ProcessBookingExportJob::dispatchSync($exportJob->id);
+        } else {
+            ProcessBookingExportJob::dispatch($exportJob->id)
+                ->onConnection($connection)
+                ->onQueue($queue);
+        }
 
         return redirect()->back()
             ->with('success', 'Export dijadwalkan. Silakan tunggu hingga selesai.')
@@ -191,12 +207,17 @@ class AdminDashboardController extends Controller
 
     public function showExportJob(ExportJob $exportJob): JsonResponse
     {
+        $disk = $exportJob->disk ?: (config('exports.disk') ?? config('filesystems.default'));
+        $ready = $exportJob->status === 'completed'
+            && (bool) $exportJob->file_path
+            && Storage::disk($disk)->exists((string) $exportJob->file_path);
+
         return response()->json([
             'id' => $exportJob->id,
             'status' => $exportJob->status,
             'format' => $exportJob->format,
             'error_message' => $exportJob->error_message,
-            'download_url' => $exportJob->status === 'completed' ? route('admin.exports.download', $exportJob) : null,
+            'download_url' => $ready ? route('admin.exports.download', $exportJob) : null,
         ]);
     }
 
@@ -206,11 +227,13 @@ class AdminDashboardController extends Controller
             abort(404);
         }
 
+        $disk = $exportJob->disk ?: (config('exports.disk') ?? config('filesystems.default'));
+
         $path = $exportJob->file_path;
-        if (! Storage::exists($path)) {
+        if (! Storage::disk($disk)->exists($path)) {
             abort(404);
         }
 
-        return Storage::download($path);
+        return Storage::disk($disk)->download($path);
     }
 }
