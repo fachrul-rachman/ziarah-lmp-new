@@ -30,7 +30,7 @@ class AdminBookingExport implements FromArray, WithEvents
         $columns = $this->columnCount();
 
         $header1 = array_pad(['DATA BOOKING'], $columns, '');
-        $header2 = array_pad(['TANGGAL EXPORT: '.$this->formatRange()], $columns, '');
+        $header2 = array_pad(['PERIODE: '.$this->formatRange()], $columns, '');
 
         $ziarahRows = array_values(array_filter($this->rows, fn ($r) => ($r['activity_type'] ?? '') === 'ziarah'));
         $kegiatanRows = array_values(array_filter($this->rows, fn ($r) => ($r['activity_type'] ?? '') !== 'ziarah'));
@@ -95,7 +95,7 @@ class AdminBookingExport implements FromArray, WithEvents
                 $row[] = (string) ($r['activity_label'] ?? '');
             }
 
-            $row[] = (string) ($r['time_range'] ?? '');
+            $row[] = (string) ($r['visit_schedule'] ?? '');
             $row[] = (string) ($r['location'] ?? '');
             $row[] = (string) ($r['customer_name'] ?? '');
             $row[] = (string) ($r['grave_label'] ?? '');
@@ -135,7 +135,7 @@ class AdminBookingExport implements FromArray, WithEvents
         if ($this->hideActivityColumn) {
             return [
                 'Nomor',
-                'Jam',
+                'Tanggal Visit & Jam',
                 'Lokasi',
                 'Nama',
                 'Jenis Makam',
@@ -152,7 +152,7 @@ class AdminBookingExport implements FromArray, WithEvents
         return [
             'Nomor',
             'Jenis Kegiatan',
-            'Jam',
+            'Tanggal Visit & Jam',
             'Lokasi',
             'Nama',
             'Jenis Makam',
@@ -237,8 +237,8 @@ class AdminBookingExport implements FromArray, WithEvents
 
                 // Column widths (approx).
                 $widths = $this->hideActivityColumn
-                    ? ['A' => 6, 'B' => 14, 'C' => 16, 'D' => 18, 'E' => 12, 'F' => 8, 'G' => 10, 'H' => 7, 'I' => 7, 'J' => 10, 'K' => 14, 'L' => 8]
-                    : ['A' => 6, 'B' => 14, 'C' => 14, 'D' => 16, 'E' => 18, 'F' => 12, 'G' => 8, 'H' => 10, 'I' => 7, 'J' => 7, 'K' => 10, 'L' => 14, 'M' => 8];
+                    ? ['A' => 6, 'B' => 14, 'C' => 22, 'D' => 16, 'E' => 12, 'F' => 8, 'G' => 10, 'H' => 7, 'I' => 7, 'J' => 10, 'K' => 14, 'L' => 8]
+                    : ['A' => 6, 'B' => 14, 'C' => 22, 'D' => 16, 'E' => 18, 'F' => 12, 'G' => 8, 'H' => 10, 'I' => 7, 'J' => 7, 'K' => 10, 'L' => 14, 'M' => 8];
                 foreach ($widths as $col => $w) {
                     $sheet->getColumnDimension($col)->setWidth($w);
                 }
@@ -257,7 +257,7 @@ class AdminBookingExport implements FromArray, WithEvents
 
                     $headerA = (string) $sheet->getCell('A'.$r)->getValue();
                     $headerB = (string) $sheet->getCell('B'.$r)->getValue();
-                    if ($headerA === 'Nomor' && ($headerB === 'Jenis Kegiatan' || $headerB === 'Jam')) {
+                    if ($headerA === 'Nomor' && ($headerB === 'Jenis Kegiatan' || $headerB === 'Tanggal Visit & Jam')) {
                         $sheet->getStyle("A{$r}:{$lastCol}{$r}")->getFont()->setBold(true);
                         $sheet->getStyle("A{$r}:{$lastCol}{$r}")->getFill()
                             ->setFillType(Fill::FILL_SOLID)
@@ -273,4 +273,3 @@ class AdminBookingExport implements FromArray, WithEvents
         ];
     }
 }
-

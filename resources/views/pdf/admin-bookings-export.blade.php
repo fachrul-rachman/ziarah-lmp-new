@@ -46,7 +46,7 @@
 @endphp
 
 <h1>DATA BOOKING</h1>
-<div class="sub">TANGGAL EXPORT: {{ $rangeText }}</div>
+<div class="sub">PERIODE: {{ $rangeText }}</div>
 
 @foreach($sections as $section)
     @php
@@ -64,7 +64,7 @@
         <tr>
             <th class="center" style="width: 24px;">Nomor</th>
             <th style="width: 88px;">Jenis Kegiatan</th>
-            <th class="nowrap" style="width: 70px;">Jam</th>
+            <th class="nowrap" style="width: 90px;">Tanggal Visit &amp; Jam</th>
             <th style="width: 90px;">Lokasi</th>
             <th style="width: 110px;">Nama</th>
             <th style="width: 70px;">Jenis Makam</th>
@@ -95,7 +95,7 @@
             <tr>
                 <td class="center">{{ $idx + 1 }}</td>
                 <td>{{ $r['activity_label'] ?? '' }}</td>
-                <td class="nowrap">{{ $r['time_range'] ?? '' }}</td>
+                <td class="nowrap">{{ $r['visit_schedule'] ?? '' }}</td>
                 <td>{{ $r['location'] ?? '' }}</td>
                 <td>{{ $r['customer_name'] ?? '' }}</td>
                 <td>{{ $r['grave_label'] ?? '' }}</td>
@@ -122,4 +122,3 @@
 
 </body>
 </html>
-

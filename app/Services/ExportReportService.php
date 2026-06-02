@@ -112,6 +112,8 @@ class ExportReportService
                 $startTime = $b->timeSlot?->start_time;
                 $start = $startTime ? \Carbon\CarbonImmutable::parse($startTime, 'Asia/Jakarta')->format('H:i') : '';
                 $end = $startTime ? \Carbon\CarbonImmutable::parse($startTime, 'Asia/Jakarta')->addMinutes(59)->format('H:i') : '';
+                $visitDateLabel = optional($b->visit_date)->timezone('Asia/Jakarta')->format('d M Y');
+                $visitDateSort = optional($b->visit_date)->format('Y-m-d') ?? '';
 
                 $activityLabel = match ($b->activity_type) {
                     'ziarah' => 'Ziarah',
@@ -135,11 +137,15 @@ class ExportReportService
                     'booking_id' => $b->id,
                     'activity_type' => (string) ($b->activity_type ?? ''),
                     'activity_label' => $activityLabel,
-                    'time_range' => $start && $end ? "{$start} - {$end}" : '',
+                    'visit_schedule' => trim(($visitDateLabel ?: '') . ($visitDateLabel && $start ? ', ' : '') . ($start ?: '')),
+                    'visit_date_sort' => $visitDateSort,
+                    'time_sort' => $start,
                     'location' => $b->location?->name ?? '',
+                    'location_sort' => mb_strtolower((string) ($b->location?->name ?? '')),
                     'customer_name' => (string) ($b->customer_name ?? ''),
                     'grave_label' => $graveLabel,
                     'zone' => $b->zone?->name ?? '',
+                    'zone_sort' => mb_strtolower((string) ($b->zone?->name ?? '')),
                     'lot' => (string) ($b->lot?->lot_number ?? ''),
                     'has_tent' => $tent ? 1 : 0,
                     'chairs_count' => $chairs,
@@ -153,19 +159,23 @@ class ExportReportService
             ->all();
 
         usort($rows, function (array $a, array $b): int {
-            return [
-                $a['activity_type'] ?? '',
-                $a['zone'] ?? '',
-                $a['visit_date'] ?? '',
-                $a['time_range'] ?? '',
-                $a['lot'] ?? '',
-            ] <=> [
-                $b['activity_type'] ?? '',
-                $b['zone'] ?? '',
-                $b['visit_date'] ?? '',
-                $b['time_range'] ?? '',
-                $b['lot'] ?? '',
+            $comparisons = [
+                [$a['location_sort'] ?? '', $b['location_sort'] ?? ''],
+                [$a['visit_date_sort'] ?? '', $b['visit_date_sort'] ?? ''],
+                [$a['time_sort'] ?? '', $b['time_sort'] ?? ''],
+                [$a['zone_sort'] ?? '', $b['zone_sort'] ?? ''],
+                [$a['lot'] ?? '', $b['lot'] ?? ''],
+                [$a['activity_type'] ?? '', $b['activity_type'] ?? ''],
             ];
+
+            foreach ($comparisons as [$left, $right]) {
+                $result = strcasecmp((string) $left, (string) $right);
+                if ($result !== 0) {
+                    return $result;
+                }
+            }
+
+            return 0;
         });
 
         return [$rows, $minDate, $maxDate];
