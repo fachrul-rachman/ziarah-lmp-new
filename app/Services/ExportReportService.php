@@ -27,13 +27,16 @@ class ExportReportService
         $exportMaxDate = $labelTo ?? $maxDate;
 
         $dir = 'exports';
-        $storage->makeDirectory($dir);
+        $useDedicatedExportsDisk = $disk === 'exports';
+        if (! $useDedicatedExportsDisk) {
+            $storage->makeDirectory($dir);
+        }
 
         $stamp = now()->format('Ymd_His');
         $base = "booking_export_{$stamp}";
 
         if ($format === 'excel') {
-            $path = "{$dir}/{$base}.xlsx";
+            $path = $useDedicatedExportsDisk ? "{$base}.xlsx" : "{$dir}/{$base}.xlsx";
             $ok = Excel::store(new AdminBookingExport($rows, $exportMinDate, $exportMaxDate), $path, $disk);
             if (! $ok) {
                 throw new \RuntimeException('Gagal menyimpan file export Excel.');
@@ -41,7 +44,7 @@ class ExportReportService
             return $path;
         }
 
-        $path = "{$dir}/{$base}.pdf";
+        $path = $useDedicatedExportsDisk ? "{$base}.pdf" : "{$dir}/{$base}.pdf";
         $pdf = Pdf::loadView('pdf.admin-bookings-export', [
             'rows' => $rows,
             'minDate' => $exportMinDate,

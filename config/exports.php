@@ -11,7 +11,8 @@ return [
     | stored on a shared disk (e.g. S3) to make downloads reliable.
     |
     */
-    'disk' => env('EXPORTS_DISK', env('FILESYSTEM_DISK', 'local')),
+    // Default to the dedicated private exports disk.
+    'disk' => env('EXPORTS_DISK', 'exports'),
 
     /*
     |--------------------------------------------------------------------------
