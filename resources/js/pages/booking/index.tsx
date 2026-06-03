@@ -584,8 +584,8 @@ export default function BookingIndex() {
               ) : null}
               {state.step === 2 ? (
                 <>
-                  <h2>Zona, Tanggal &amp; Lot</h2>
-                  <p>Tentukan zona, waktu, dan lot yang tersedia</p>
+                  <h2>Tanggal, Jam, Zona &amp; Lot</h2>
+                  <p>Tentukan tanggal, jam, zona, dan lot yang tersedia</p>
                   <div className="hint-box" style={{ marginTop: 10 }}>
                     <p style={{ color: "var(--ink)" }}>Pastikan zona dan lot di isi dengan benar.</p>
                   </div>
@@ -695,6 +695,41 @@ export default function BookingIndex() {
               {state.step === 2 ? (
                 <div className="space">
                   <div>
+                    <label className="field-label">Tanggal kunjungan</label>
+                    {renderCalendar()}
+                    {errors.visit_date ? (
+                      <p style={{ marginTop: 6, fontSize: 12, color: "var(--color-text-danger)" }}>
+                        {errors.visit_date}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div>
+                    <label className="field-label">Jam kunjungan</label>
+                    <div className="ts-grid">
+                      {timeSlots.map((ts) => {
+                        const selected = state.time_slot_id === ts.id
+                        return (
+                          <button
+                            key={ts.id}
+                            type="button"
+                            className={`ts-btn ${selected ? "sel" : ""}`}
+                            onClick={() => selectSlot(ts.id)}
+                            title={`${ts.start_time} - ${ts.end_time}`}
+                          >
+                            {ts.start_time}
+                          </button>
+                        )
+                      })}
+                    </div>
+                    {errors.time_slot_id ? (
+                      <p style={{ marginTop: 6, fontSize: 12, color: "var(--color-text-danger)" }}>
+                        {errors.time_slot_id}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div>
                     <div className="row-between">
                       <label className="field-label" style={{ margin: 0 }}>
                         Zona
@@ -744,41 +779,6 @@ export default function BookingIndex() {
                   </div>
 
                   <div>
-                    <label className="field-label">Tanggal kunjungan</label>
-                    {renderCalendar()}
-                    {errors.visit_date ? (
-                      <p style={{ marginTop: 6, fontSize: 12, color: "var(--color-text-danger)" }}>
-                        {errors.visit_date}
-                      </p>
-                    ) : null}
-                  </div>
-
-                  <div>
-                    <label className="field-label">Jam kunjungan</label>
-                    <div className="ts-grid">
-                      {timeSlots.map((ts) => {
-                        const selected = state.time_slot_id === ts.id
-                        return (
-                          <button
-                            key={ts.id}
-                            type="button"
-                            className={`ts-btn ${selected ? "sel" : ""}`}
-                            onClick={() => selectSlot(ts.id)}
-                            title={`${ts.start_time} - ${ts.end_time}`}
-                          >
-                            {ts.start_time}
-                          </button>
-                        )
-                      })}
-                    </div>
-                    {errors.time_slot_id ? (
-                      <p style={{ marginTop: 6, fontSize: 12, color: "var(--color-text-danger)" }}>
-                        {errors.time_slot_id}
-                      </p>
-                    ) : null}
-                  </div>
-
-                  <div>
                     <div className="row-between">
                       <label className="field-label" style={{ margin: 0 }}>
                         Nomor lot
@@ -789,7 +789,7 @@ export default function BookingIndex() {
 
                     {!state.zone_id || !state.booking_date || !state.time_slot_id ? (
                       <div className="hint-box" style={{ marginTop: 8 }}>
-                        <p>Pilih zona, tanggal, dan jam terlebih dahulu.</p>
+                        <p>Pilih tanggal, jam, dan zona terlebih dahulu.</p>
                       </div>
                     ) : (
                       <>
