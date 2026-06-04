@@ -168,6 +168,8 @@ class DiscordNotificationService
         $startTime = $b->timeSlot?->start_time;
         $start = $startTime ? CarbonImmutable::parse($startTime, 'Asia/Jakarta')->format('H:i') : '';
         $end = $startTime ? CarbonImmutable::parse($startTime, 'Asia/Jakarta')->addMinutes(59)->format('H:i') : '';
+        $visitDateLabel = optional($b->visit_date)->timezone('Asia/Jakarta')->format('d M Y');
+        $visitDateSort = optional($b->visit_date)->format('Y-m-d') ?? '';
 
         $activityLabel = match ($b->activity_type) {
             'ziarah' => 'Ziarah',
@@ -191,6 +193,11 @@ class DiscordNotificationService
             'booking_id' => $b->id,
             'activity_type' => (string) ($b->activity_type ?? ''),
             'activity_label' => $activityLabel,
+            // Keep key consistent with AdminBookingExport / ExportReportService.
+            'visit_schedule' => trim(($visitDateLabel ?: '').($visitDateLabel && $start ? ', ' : '').($start ?: '')),
+            // Useful for stable sorting (even if not used by the export today).
+            'visit_date_sort' => $visitDateSort,
+            'time_sort' => $start,
             'time_range' => $start && $end ? "{$start} - {$end}" : '',
             'location' => $b->location?->name ?? '',
             'customer_name' => (string) ($b->customer_name ?? ''),

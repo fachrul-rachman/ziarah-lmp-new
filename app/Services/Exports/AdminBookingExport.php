@@ -95,7 +95,7 @@ class AdminBookingExport implements FromArray, WithEvents
                 $row[] = (string) ($r['activity_label'] ?? '');
             }
 
-            $row[] = (string) ($r['visit_schedule'] ?? '');
+            $row[] = $this->resolveVisitSchedule($r);
             $row[] = (string) ($r['location'] ?? '');
             $row[] = (string) ($r['customer_name'] ?? '');
             $row[] = (string) ($r['grave_label'] ?? '');
@@ -125,6 +125,38 @@ class AdminBookingExport implements FromArray, WithEvents
         $out[] = $totalRow;
 
         return $out;
+    }
+
+    /**
+     * @param array<string,mixed> $r
+     */
+    private function resolveVisitSchedule(array $r): string
+    {
+        $explicit = trim((string) ($r['visit_schedule'] ?? ''));
+        if ($explicit !== '') {
+            return $explicit;
+        }
+
+        $visitDate = trim((string) ($r['visit_date'] ?? ''));
+        $dateLabel = '';
+        if ($visitDate !== '') {
+            try {
+                $dateLabel = CarbonImmutable::parse($visitDate, 'Asia/Jakarta')->format('d M Y');
+            } catch (\Throwable) {
+                $dateLabel = $visitDate;
+            }
+        }
+
+        $time = trim((string) ($r['time_sort'] ?? ''));
+        if ($time === '') {
+            $timeRange = trim((string) ($r['time_range'] ?? ''));
+            if ($timeRange !== '') {
+                $parts = preg_split('/\s*-\s*/', $timeRange);
+                $time = trim((string) ($parts[0] ?? ''));
+            }
+        }
+
+        return trim(($dateLabel ?: '').($dateLabel && $time ? ', ' : '').($time ?: ''));
     }
 
     /**
