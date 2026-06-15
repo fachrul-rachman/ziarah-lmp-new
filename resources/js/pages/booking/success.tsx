@@ -88,11 +88,11 @@ export default function BookingSuccess() {
         <div className="wrap">
           <div className="success-header">
             <div className="check-ring" aria-hidden>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <svg width="38" height="38" viewBox="0 0 24 24" fill="none">
                 <path
                   d="M5 12l5 5L20 7"
-                  stroke="#C9A84C"
-                  strokeWidth="2.5"
+                  stroke="#FFFFFF"
+                  strokeWidth="3.25"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
