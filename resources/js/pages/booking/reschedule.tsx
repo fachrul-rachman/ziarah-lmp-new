@@ -105,6 +105,12 @@ function minBookingDateYmd(): string {
   return ymdFromDate(d)
 }
 
+function maxBookingDateYmd(): string {
+  const d = jakartaTodayStart()
+  d.setDate(d.getDate() + 100)
+  return ymdFromDate(d)
+}
+
 type BookingState = {
   step: 1 | 2 | 3 | 4
   activity_type: string
@@ -202,6 +208,7 @@ export default function BookingReschedule() {
   })
 
   const minDateYmd = React.useMemo(() => minBookingDateYmd(), [])
+  const maxDateYmd = React.useMemo(() => maxBookingDateYmd(), [])
 
   const selectedTimeSlot = React.useMemo(() => {
     if (!state.time_slot_id) return null
@@ -503,6 +510,7 @@ export default function BookingReschedule() {
     const total = new Date(yr, mo + 1, 0).getDate()
 
     const minDate = ymdToDate(minDateYmd) ?? jakartaTodayStart()
+    const maxDate = ymdToDate(maxDateYmd) ?? jakartaTodayStart()
     const blanks = Array.from({ length: lead }, (_, i) => (
       <div key={`b-${i}`} />
     ))
@@ -512,7 +520,7 @@ export default function BookingReschedule() {
       const dt = new Date(yr, mo, d)
       dt.setHours(0, 0, 0, 0)
       const ymd = ymdFromDate(dt)
-      const disabled = dt < minDate
+      const disabled = dt < minDate || dt > maxDate
       const selected = state.booking_date === ymd
       const cls = ["cal-day", disabled ? "disabled" : "", selected ? "selected" : ""]
         .filter(Boolean)
@@ -553,7 +561,7 @@ export default function BookingReschedule() {
           {days}
         </div>
         <div className="cal-info">
-          <span>Minimal pemesanan H+2 dari hari ini</span>
+          <span>Minimal pemesanan H+2 dan maksimal adalah H+100 dari hari ini</span>
         </div>
       </div>
     )
