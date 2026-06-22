@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Models\Lot;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
 class BookingAvailabilityService
 {
@@ -19,27 +21,60 @@ class BookingAvailabilityService
         int $timeSlotId,
         ?int $excludeBookingId = null,
     ): Collection {
-        $bookedLotIds = DB::table('bookings')
-            ->where('visit_date', $visitDate)
-            ->where('time_slot_id', $timeSlotId)
-            ->whereIn('status', ['confirmed', 'rescheduled'])
-            ->when($excludeBookingId !== null, fn ($q) => $q->where('id', '!=', $excludeBookingId))
-            ->pluck('lot_id')
-            ->all();
+        $cacheStore = config('booking.lots_cache_store');
+        $cacheKey = implode(':', [
+            'booking',
+            'lots',
+            $locationId,
+            $zoneId,
+            $graveType,
+            $visitDate,
+            $timeSlotId,
+            $excludeBookingId ?? 'none',
+        ]);
+        $ttlSeconds = max(1, (int) config('booking.lots_cache_seconds', 30));
 
-        return Lot::query()
-            ->where('location_id', $locationId)
-            ->where('zone_id', $zoneId)
-            ->where('grave_type', $graveType)
-            ->whereNull('deleted_at')
-            ->when(count($bookedLotIds) > 0, fn ($q) => $q->whereNotIn('id', $bookedLotIds))
-            ->orderBy('normalized_lot_number')
-            ->get(['id', 'lot_number', 'size', 'normalized_size'])
-            ->map(fn (Lot $lot) => [
-                'id' => $lot->id,
-                'lot_number' => $lot->lot_number,
-                'size' => $lot->size,
-                'normalized_size' => (string) $lot->normalized_size,
-            ]);
+        try {
+            $repository = $cacheStore ? Cache::store($cacheStore) : Cache::store();
+        } catch (InvalidArgumentException) {
+            $repository = Cache::store();
+        }
+
+        /** @var array<int,array{id:int,lot_number:string,size:string,normalized_size:string}> $rows */
+        $rows = $repository->remember($cacheKey, now()->addSeconds($ttlSeconds), function () use (
+            $locationId,
+            $zoneId,
+            $graveType,
+            $visitDate,
+            $timeSlotId,
+            $excludeBookingId,
+        ) {
+            $bookedLotIds = DB::table('bookings')
+                ->where('visit_date', $visitDate)
+                ->where('time_slot_id', $timeSlotId)
+                ->whereIn('status', ['confirmed', 'rescheduled'])
+                ->when($excludeBookingId !== null, fn ($q) => $q->where('id', '!=', $excludeBookingId))
+                ->pluck('lot_id')
+                ->all();
+
+            return Lot::query()
+                ->where('location_id', $locationId)
+                ->where('zone_id', $zoneId)
+                ->where('grave_type', $graveType)
+                ->whereNull('deleted_at')
+                ->when(count($bookedLotIds) > 0, fn ($q) => $q->whereNotIn('id', $bookedLotIds))
+                ->orderBy('normalized_lot_number')
+                ->get(['id', 'lot_number', 'size', 'normalized_size'])
+                ->map(fn (Lot $lot) => [
+                    'id' => $lot->id,
+                    'lot_number' => $lot->lot_number,
+                    'size' => $lot->size,
+                    'normalized_size' => (string) $lot->normalized_size,
+                ])
+                ->values()
+                ->all();
+        });
+
+        return collect($rows);
     }
 }

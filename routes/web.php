@@ -1,27 +1,43 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AdminAuthController;
+use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminPageController;
-use App\Http\Controllers\Admin\TimeSlotController;
+use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\LocationController;
-use App\Http\Controllers\Admin\ZoneController;
 use App\Http\Controllers\Admin\LotController;
 use App\Http\Controllers\Admin\LotImportController;
-use App\Http\Controllers\Admin\EventController;
-use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\LotSizeRuleController;
+use App\Http\Controllers\Admin\TimeSlotController;
+use App\Http\Controllers\Admin\ZoneController;
 use App\Http\Controllers\Booking\BookingAvailabilityController;
 use App\Http\Controllers\Booking\BookingController;
-use App\Http\Controllers\Booking\PublicBookingController;
 use App\Http\Controllers\Booking\BookingSubmitController;
 use App\Http\Controllers\Booking\EventRulesController;
+use App\Http\Controllers\Booking\PublicBookingController;
+use App\Http\Middleware\HandleInertiaRequests;
 use App\Models\Booking;
+use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Cookie\Middleware\EncryptCookies;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
+use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Route;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 Route::get('/', [BookingController::class, 'index'])->name('home');
 Route::get('/booking/zones', [BookingController::class, 'zones'])->name('booking.zones');
 Route::get('/booking/lot-size-rules', [BookingController::class, 'lotSizeRules'])->name('booking.lot-size-rules');
-Route::get('/booking/lots', [BookingAvailabilityController::class, 'lots'])->name('booking.lots');
+Route::get('/booking/lots', [BookingAvailabilityController::class, 'lots'])
+    ->middleware('booking.lots.throttle')
+    ->withoutMiddleware([
+        EncryptCookies::class,
+        AddQueuedCookiesToResponse::class,
+        StartSession::class,
+        ShareErrorsFromSession::class,
+        PreventRequestForgery::class,
+        HandleInertiaRequests::class,
+    ])
+    ->name('booking.lots');
 Route::get('/booking/hidden-facilities', [EventRulesController::class, 'hiddenFacilities'])->name('booking.hidden-facilities');
 Route::post('/booking', [BookingSubmitController::class, 'store'])->name('booking.store');
 Route::get('/booking/success/{publicToken}', [BookingSubmitController::class, 'success'])->name('booking.success');
