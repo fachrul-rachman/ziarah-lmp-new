@@ -15,6 +15,7 @@ class Booking extends Model
         'customer_name',
         'customer_email',
         'customer_phone',
+        'additional_note',
         'location_id',
         'zone_id',
         'lot_id',

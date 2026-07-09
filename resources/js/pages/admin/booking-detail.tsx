@@ -12,6 +12,7 @@ type Booking = {
   customer_name: string
   customer_email: string
   customer_phone?: string | null
+  additional_note?: string | null
   activity_type: string
   grave_type: string
   location: string
@@ -126,6 +127,12 @@ export default function AdminBookingDetail() {
                   <div>
                     <div className="text-gray-600">Alasan cancel</div>
                     <div className="font-medium">{booking.cancel_reason}</div>
+                  </div>
+                ) : null}
+                {booking.additional_note ? (
+                  <div className="sm:col-span-2">
+                    <div className="text-gray-600">Catatan tambahan</div>
+                    <div className="font-medium whitespace-pre-line">{booking.additional_note}</div>
                   </div>
                 ) : null}
               </div>

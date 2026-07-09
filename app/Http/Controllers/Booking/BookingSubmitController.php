@@ -7,25 +7,23 @@ use App\Models\Booking;
 use App\Models\Lot;
 use App\Services\BookingService;
 use App\Support\Normalization;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class BookingSubmitController extends Controller
 {
-    public function __construct(private readonly BookingService $bookingService)
-    {
-    }
+    public function __construct(private readonly BookingService $bookingService) {}
 
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'activity_type' => ['required', 'string', "in:ziarah,naik_batu,start_work,wang_san"],
+            'activity_type' => ['required', 'string', 'in:ziarah,naik_batu,start_work,wang_san'],
             'location_id' => ['required', 'integer', 'exists:locations,id'],
             'grave_type' => ['required', 'string', 'in:makam,kotak_abu'],
             'zone_id' => ['required', 'integer', 'exists:zones,id'],
@@ -40,6 +38,7 @@ class BookingSubmitController extends Controller
             'customer_name' => ['required', 'string', 'max:255'],
             'customer_email' => ['required', 'email', 'max:255'],
             'customer_phone' => ['required', 'string', 'max:32'],
+            'additional_note' => ['nullable', 'string', 'max:1000'],
         ], [
             'customer_name.required' => 'Nama wajib diisi.',
             'customer_email.required' => 'Email wajib diisi.',
@@ -103,6 +102,7 @@ class BookingSubmitController extends Controller
                 'customer_name' => $validated['customer_name'],
                 'customer_email' => $validated['customer_email'],
                 'customer_phone' => $validated['customer_phone'],
+                'additional_note' => $validated['additional_note'] ?? null,
             ]);
         } catch (\RuntimeException $e) {
             return redirect()->back()->withErrors([
@@ -132,6 +132,7 @@ class BookingSubmitController extends Controller
                 'customer_name' => $booking->customer_name,
                 'customer_email' => $booking->customer_email,
                 'customer_phone' => $booking->customer_phone,
+                'additional_note' => $booking->additional_note,
                 'grave_type' => $booking->grave_type,
                 'visit_date' => $booking->visit_date?->format('Y-m-d'),
                 'location' => ['id' => $booking->location->id, 'name' => $booking->location->name],

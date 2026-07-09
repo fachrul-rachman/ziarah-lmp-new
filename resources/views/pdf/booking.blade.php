@@ -44,6 +44,9 @@
         <div class="row"><div class="k">Nomor lot</div><div class="v">{{ $booking->lot->lot_number ?? '-' }} ({{ $booking->lot->size ?? '-' }})</div></div>
         <div class="row"><div class="k">Nama</div><div class="v">{{ $booking->customer_name }}</div></div>
         <div class="row"><div class="k">Email</div><div class="v">{{ $booking->customer_email }}</div></div>
+        @if (filled($booking->additional_note))
+            <div class="row"><div class="k">Catatan tambahan</div><div class="v" style="text-align: left; white-space: pre-line;">{{ $booking->additional_note }}</div></div>
+        @endif
         <div class="row"><div class="k">Kursi</div><div class="v">{{ (int) ($booking->facilities->chairs_count ?? 0) }}</div></div>
         <div class="row"><div class="k">Tong bakar</div><div class="v">{{ (int) ($booking->facilities->burn_barrels_count ?? 0) }}</div></div>
         <div class="row"><div class="k">Tenda</div><div class="v">{{ ($booking->facilities->has_tent ?? false) ? 'Ya' : 'Tidak' }}</div></div>
@@ -52,4 +55,3 @@
     </div>
 </body>
 </html>
-

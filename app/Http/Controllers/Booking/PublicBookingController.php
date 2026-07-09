@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Booking;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
-use App\Models\Lot;
 use App\Models\Location;
+use App\Models\Lot;
 use App\Models\TimeSlot;
 use App\Services\CancelBookingService;
 use App\Services\RescheduleBookingService;
@@ -21,8 +21,7 @@ class PublicBookingController extends Controller
     public function __construct(
         private readonly CancelBookingService $cancelService,
         private readonly RescheduleBookingService $rescheduleService,
-    ) {
-    }
+    ) {}
 
     public function show(string $publicToken): Response
     {
@@ -90,6 +89,7 @@ class PublicBookingController extends Controller
             ->get()
             ->map(function (TimeSlot $slot) {
                 $start = CarbonImmutable::parse($slot->start_time)->format('H:i');
+
                 return [
                     'id' => $slot->id,
                     'start_time' => $start,
@@ -125,6 +125,7 @@ class PublicBookingController extends Controller
             'customer_name' => ['required', 'string', 'max:255'],
             'customer_email' => ['required', 'email', 'max:255'],
             'customer_phone' => ['nullable', 'string', 'max:32'],
+            'additional_note' => ['nullable', 'string', 'max:1000'],
         ], [
             'customer_name.required' => 'Nama wajib diisi.',
             'customer_email.required' => 'Email wajib diisi.',
@@ -186,6 +187,7 @@ class PublicBookingController extends Controller
                 'customer_name' => (string) $validated['customer_name'],
                 'customer_email' => (string) $validated['customer_email'],
                 'customer_phone' => ! empty($validated['customer_phone']) ? (string) $validated['customer_phone'] : null,
+                'additional_note' => $validated['additional_note'] ?? null,
             ]);
         } catch (\RuntimeException $e) {
             return redirect()->back()->withErrors([
@@ -208,6 +210,7 @@ class PublicBookingController extends Controller
     {
         $today = now()->timezone('Asia/Jakarta')->startOfDay();
         $visit = CarbonImmutable::parse($booking->visit_date, 'Asia/Jakarta')->startOfDay();
+
         return $visit->lessThan($today);
     }
 
@@ -227,6 +230,7 @@ class PublicBookingController extends Controller
             'customer_name' => $booking->customer_name,
             'customer_email' => $booking->customer_email,
             'customer_phone' => $booking->customer_phone,
+            'additional_note' => $booking->additional_note,
             'grave_type' => $booking->grave_type,
             'visit_date' => optional($booking->visit_date)->format('Y-m-d'),
             'location' => ['id' => $booking->location->id, 'name' => $booking->location->name],

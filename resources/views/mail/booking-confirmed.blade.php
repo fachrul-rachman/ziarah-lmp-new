@@ -125,6 +125,12 @@
                             {{ $label }}: <strong style="color: #1a1a1a;">{{ $value }}</strong>
                         </span>
                     @endforeach
+                    @if (filled($booking->additional_note))
+                        <div style="margin-top: 12px;">
+                            <div style="font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;">Catatan tambahan</div>
+                            <div style="font-size: 13px; line-height: 1.6; color: #1a1a1a; white-space: pre-line;">{{ $booking->additional_note }}</div>
+                        </div>
+                    @endif
                 </td>
             </tr>
 

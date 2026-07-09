@@ -5,13 +5,14 @@ namespace App\Services;
 use App\Models\Booking;
 use App\Services\Exports\AdminBookingExport;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 
 class ExportReportService
 {
     /**
-     * @param array<string,mixed> $filters
+     * @param  array<string,mixed>  $filters
      */
     public function exportBookings(string $format, array $filters, ?string $disk = null): string
     {
@@ -41,6 +42,7 @@ class ExportReportService
             if (! $ok) {
                 throw new \RuntimeException('Gagal menyimpan file export Excel.');
             }
+
             return $path;
         }
 
@@ -54,11 +56,12 @@ class ExportReportService
         if (! $ok) {
             throw new \RuntimeException('Gagal menyimpan file export PDF.');
         }
+
         return $path;
     }
 
     /**
-     * @param array<string,mixed> $filters
+     * @param  array<string,mixed>  $filters
      * @return array{0: array<int,array<string,mixed>>, 1: ?string, 2: ?string}
      */
     private function queryRows(array $filters): array
@@ -67,6 +70,7 @@ class ExportReportService
             ->select([
                 'id',
                 'customer_name',
+                'additional_note',
                 'activity_type',
                 'visit_date',
                 'status',
@@ -110,8 +114,8 @@ class ExportReportService
         $rows = $bookings
             ->map(function (Booking $b): array {
                 $startTime = $b->timeSlot?->start_time;
-                $start = $startTime ? \Carbon\CarbonImmutable::parse($startTime, 'Asia/Jakarta')->format('H:i') : '';
-                $end = $startTime ? \Carbon\CarbonImmutable::parse($startTime, 'Asia/Jakarta')->addMinutes(59)->format('H:i') : '';
+                $start = $startTime ? CarbonImmutable::parse($startTime, 'Asia/Jakarta')->format('H:i') : '';
+                $end = $startTime ? CarbonImmutable::parse($startTime, 'Asia/Jakarta')->addMinutes(59)->format('H:i') : '';
                 $visitDateLabel = optional($b->visit_date)->timezone('Asia/Jakarta')->format('d M Y');
                 $visitDateSort = optional($b->visit_date)->format('Y-m-d') ?? '';
 
@@ -137,12 +141,13 @@ class ExportReportService
                     'booking_id' => $b->id,
                     'activity_type' => (string) ($b->activity_type ?? ''),
                     'activity_label' => $activityLabel,
-                    'visit_schedule' => trim(($visitDateLabel ?: '') . ($visitDateLabel && $start ? ', ' : '') . ($start ?: '')),
+                    'visit_schedule' => trim(($visitDateLabel ?: '').($visitDateLabel && $start ? ', ' : '').($start ?: '')),
                     'visit_date_sort' => $visitDateSort,
                     'time_sort' => $start,
                     'location' => $b->location?->name ?? '',
                     'location_sort' => mb_strtolower((string) ($b->location?->name ?? '')),
                     'customer_name' => (string) ($b->customer_name ?? ''),
+                    'additional_note' => trim((string) ($b->additional_note ?? '')),
                     'grave_label' => $graveLabel,
                     'zone' => $b->zone?->name ?? '',
                     'zone_sort' => mb_strtolower((string) ($b->zone?->name ?? '')),

@@ -109,6 +109,7 @@ type BookingState = {
   name: string
   email: string
   phone: string
+  additional_note: string
   cal_year: number
   cal_month: number
 }
@@ -149,6 +150,7 @@ export default function BookingIndex() {
     name: "",
     email: "",
     phone: "",
+    additional_note: "",
     cal_year: calInit.cal_year,
     cal_month: calInit.cal_month,
   })
@@ -176,6 +178,7 @@ export default function BookingIndex() {
     customer_name: "",
     customer_email: "",
     customer_phone: "",
+    additional_note: "",
   })
 
   const minDateYmd = React.useMemo(() => minBookingDateYmd(), [])
@@ -554,6 +557,7 @@ export default function BookingIndex() {
       customer_name: state.name,
       customer_email: state.email,
       customer_phone: state.phone,
+      additional_note: state.additional_note,
     })
 
     postForm.post("/booking")
@@ -1101,6 +1105,22 @@ export default function BookingIndex() {
                         {state.has_lamp ? "Ya" : "Tidak"}
                       </span>
                     </div>
+                  </div>
+
+                  <div>
+                    <label className="field-label">Catatan tambahan</label>
+                    <textarea
+                      className="inp"
+                      rows={4}
+                      placeholder="Tulis catatan tambahan bila perlu"
+                      value={state.additional_note}
+                      onChange={(e) => setState((p) => ({ ...p, additional_note: e.target.value }))}
+                    />
+                    {errors.additional_note ? (
+                      <p style={{ marginTop: 6, fontSize: 12, color: "var(--color-text-danger)" }}>
+                        {errors.additional_note}
+                      </p>
+                    ) : null}
                   </div>
 
                   <button

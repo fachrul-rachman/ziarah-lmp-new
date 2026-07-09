@@ -2,10 +2,9 @@
 
 namespace App\Services;
 
+use App\Jobs\SendBookingConfirmedEmailJob;
 use App\Models\Booking;
 use App\Models\Lot;
-use App\Jobs\SendBookingConfirmedEmailJob;
-use App\Services\LotSizeRuleService;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -17,8 +16,7 @@ class BookingService
         private readonly BookingAvailabilityService $availability,
         private readonly BookingCodeService $codeService,
         private readonly LotSizeRuleService $sizeRules,
-    ) {
-    }
+    ) {}
 
     /**
      * @param array{
@@ -38,12 +36,15 @@ class BookingService
      *  },
      *  customer_name:string,
      *  customer_email:string,
-     *  customer_phone:string
+     *  customer_phone:string,
+     *  additional_note?:?string
      * } $data
      */
     public function create(array $data): Booking
     {
         return DB::transaction(function () use ($data) {
+            $additionalNote = trim((string) ($data['additional_note'] ?? ''));
+
             $lot = Lot::query()->whereKey($data['lot_id'])->firstOrFail(['id', 'normalized_lot_number', 'normalized_size', 'size']);
 
             $rule = $this->sizeRules->ruleForSize((string) ($lot->normalized_size ?: $lot->size));
@@ -77,6 +78,7 @@ class BookingService
                 'customer_name' => $data['customer_name'],
                 'customer_email' => $data['customer_email'],
                 'customer_phone' => $data['customer_phone'],
+                'additional_note' => $additionalNote !== '' ? $additionalNote : null,
                 'location_id' => $data['location_id'],
                 'zone_id' => $data['zone_id'],
                 'lot_id' => $data['lot_id'],

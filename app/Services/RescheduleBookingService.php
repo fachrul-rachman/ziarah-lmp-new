@@ -8,15 +8,13 @@ use App\Models\Lot;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
-use App\Services\LotSizeRuleService;
 
 class RescheduleBookingService
 {
     public function __construct(
         private readonly BookingCodeService $codeService,
         private readonly LotSizeRuleService $sizeRules,
-    ) {
-    }
+    ) {}
 
     /**
      * @param array{
@@ -35,7 +33,8 @@ class RescheduleBookingService
      *  },
      *  customer_name:string,
      *  customer_email:string,
-     *  customer_phone?:string
+     *  customer_phone?:string,
+     *  additional_note?:?string
      * } $data
      */
     public function reschedule(Booking $booking, array $data): Booking
@@ -45,6 +44,8 @@ class RescheduleBookingService
         }
 
         return DB::transaction(function () use ($booking, $data) {
+            $additionalNote = trim((string) ($data['additional_note'] ?? ''));
+
             $booking->refresh();
             $booking->loadMissing(['facilities']);
 
@@ -110,6 +111,7 @@ class RescheduleBookingService
                 'customer_name' => $data['customer_name'],
                 'customer_email' => $data['customer_email'],
                 'customer_phone' => $data['customer_phone'] ?? $booking->customer_phone,
+                'additional_note' => $additionalNote !== '' ? $additionalNote : null,
                 'location_id' => $data['location_id'],
                 'zone_id' => $data['zone_id'],
                 'lot_id' => $data['lot_id'],
@@ -150,6 +152,7 @@ class RescheduleBookingService
     {
         $today = now()->timezone('Asia/Jakarta')->startOfDay();
         $visit = CarbonImmutable::parse($booking->visit_date, 'Asia/Jakarta')->startOfDay();
+
         return $visit->lessThan($today);
     }
 }

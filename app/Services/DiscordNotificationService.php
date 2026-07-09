@@ -68,7 +68,7 @@ class DiscordNotificationService
     }
 
     /**
-     * @param array<int,array<string,mixed>> $rows
+     * @param  array<int,array<string,mixed>>  $rows
      * @return array<int,array<string,string>>
      */
     private function generateExcelPerLocation(string $category, array $rows, string $targetDate, string $dateFileText): array
@@ -106,7 +106,7 @@ class DiscordNotificationService
     }
 
     /**
-     * @param array<int,array<string,string>> $attachments
+     * @param  array<int,array<string,string>>  $attachments
      */
     private function postMultipart(string $webhookUrl, string $content, array $attachments): void
     {
@@ -135,7 +135,7 @@ class DiscordNotificationService
     }
 
     /**
-     * @param array<int,array<string,mixed>> $rows
+     * @param  array<int,array<string,mixed>>  $rows
      */
     private function summaryBlock(string $title, string $dateText, array $rows): string
     {
@@ -149,8 +149,8 @@ class DiscordNotificationService
         return implode("\n", [
             "**{$title}**",
             "📅 Tanggal: {$dateText}",
-            "",
-            "📊 Ringkasan:",
+            '',
+            '📊 Ringkasan:',
             "Total Booking: {$totBooking}",
             "Total Tenda: {$tenda}",
             "Total Kursi: {$kursi}",
@@ -201,6 +201,7 @@ class DiscordNotificationService
             'time_range' => $start && $end ? "{$start} - {$end}" : '',
             'location' => $b->location?->name ?? '',
             'customer_name' => (string) ($b->customer_name ?? ''),
+            'additional_note' => trim((string) ($b->additional_note ?? '')),
             'grave_label' => $graveLabel,
             'zone' => $b->zone?->name ?? '',
             'lot' => (string) ($b->lot?->lot_number ?? ''),
@@ -234,6 +235,7 @@ class DiscordNotificationService
         ];
 
         $m = $months[(int) $dt->format('n')] ?? $dt->format('M');
+
         return $dt->format('d').'-'.$m.'-'.$dt->format('Y');
     }
 
@@ -246,6 +248,7 @@ class DiscordNotificationService
         $v = preg_replace('/\s+/', ' ', $v) ?? $v;
         $v = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '-', $v);
         $v = str_replace(' ', '-', $v);
+
         return $v;
     }
 }

@@ -8,6 +8,7 @@ type Booking = {
   customer_name: string
   customer_email: string
   customer_phone?: string | null
+  additional_note?: string | null
   grave_type: string
   visit_date: string
   location: { id: number; name: string }
@@ -190,6 +191,17 @@ export default function BookingSuccess() {
                 </div>
               </div>
             </div>
+
+            {booking.additional_note ? (
+              <div className="fac-section">
+                <div className="fac-label">Catatan tambahan</div>
+                <div className="fac-box">
+                  <div style={{ whiteSpace: "pre-line", color: "#1a2744", lineHeight: 1.6 }}>
+                    {booking.additional_note}
+                  </div>
+                </div>
+              </div>
+            ) : null}
 
             <div className="actions">
               <a className="btn-primary" href={`/booking/pdf/${booking.public_token}`}>

@@ -67,6 +67,7 @@
             <th class="nowrap" style="width: 90px;">Tanggal Visit &amp; Jam</th>
             <th style="width: 90px;">Lokasi</th>
             <th style="width: 110px;">Nama</th>
+            <th style="width: 150px;">Catatan Tambahan</th>
             <th style="width: 70px;">Jenis Makam</th>
             <th style="width: 50px;">Zona</th>
             <th style="width: 55px;">No. Lot</th>
@@ -98,6 +99,7 @@
                 <td class="nowrap">{{ $r['visit_schedule'] ?? '' }}</td>
                 <td>{{ $r['location'] ?? '' }}</td>
                 <td>{{ $r['customer_name'] ?? '' }}</td>
+                <td>{{ $r['additional_note'] ?? '' }}</td>
                 <td>{{ $r['grave_label'] ?? '' }}</td>
                 <td>{{ $r['zone'] ?? '' }}</td>
                 <td>{{ $r['lot'] ?? '' }}</td>
@@ -109,7 +111,7 @@
             </tr>
         @endforeach
         <tr>
-            <td colspan="8" class="right muted"><strong>Total Kebutuhan Fasilitas:</strong></td>
+            <td colspan="9" class="right muted"><strong>Total Kebutuhan Fasilitas:</strong></td>
             <td class="center"><strong>{{ $totTent }}</strong></td>
             <td class="center"><strong>{{ $totChairs }}</strong></td>
             <td class="center"><strong>{{ $totBurn }}</strong></td>

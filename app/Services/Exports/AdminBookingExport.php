@@ -9,21 +9,20 @@ use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Color;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 class AdminBookingExport implements FromArray, WithEvents
 {
     /**
-     * @param array<int,array<string,mixed>> $rows
+     * @param  array<int,array<string,mixed>>  $rows
      */
     public function __construct(
         private readonly array $rows,
         private readonly ?string $minDate,
         private readonly ?string $maxDate,
         private readonly bool $hideActivityColumn = false,
-    ) {
-    }
+    ) {}
 
     public function array(): array
     {
@@ -54,7 +53,7 @@ class AdminBookingExport implements FromArray, WithEvents
     }
 
     /**
-     * @param array<int,array<string,mixed>> $rows
+     * @param  array<int,array<string,mixed>>  $rows
      * @return array<int,array<int,string>>
      */
     private function section(string $title, array $rows): array
@@ -98,6 +97,7 @@ class AdminBookingExport implements FromArray, WithEvents
             $row[] = $this->resolveVisitSchedule($r);
             $row[] = (string) ($r['location'] ?? '');
             $row[] = (string) ($r['customer_name'] ?? '');
+            $row[] = (string) ($r['additional_note'] ?? '');
             $row[] = (string) ($r['grave_label'] ?? '');
             $row[] = (string) ($r['zone'] ?? '');
             $row[] = (string) ($r['lot'] ?? '');
@@ -128,7 +128,7 @@ class AdminBookingExport implements FromArray, WithEvents
     }
 
     /**
-     * @param array<string,mixed> $r
+     * @param  array<string,mixed>  $r
      */
     private function resolveVisitSchedule(array $r): string
     {
@@ -170,6 +170,7 @@ class AdminBookingExport implements FromArray, WithEvents
                 'Tanggal Visit & Jam',
                 'Lokasi',
                 'Nama',
+                'Catatan Tambahan',
                 'Jenis Makam',
                 'Zona',
                 'No. Lot',
@@ -187,6 +188,7 @@ class AdminBookingExport implements FromArray, WithEvents
             'Tanggal Visit & Jam',
             'Lokasi',
             'Nama',
+            'Catatan Tambahan',
             'Jenis Makam',
             'Zona',
             'No. Lot',
@@ -200,19 +202,19 @@ class AdminBookingExport implements FromArray, WithEvents
 
     private function columnCount(): int
     {
-        return $this->hideActivityColumn ? 12 : 13;
+        return $this->hideActivityColumn ? 13 : 14;
     }
 
     private function facilityStartIndex(): int
     {
         // 0-based array index for the first facility column (Tenda)
-        return $this->hideActivityColumn ? 7 : 8;
+        return $this->hideActivityColumn ? 8 : 9;
     }
 
     private function totalLabelIndex(): int
     {
         // 0-based index of the "Total Kebutuhan Fasilitas:" cell
-        return $this->hideActivityColumn ? 6 : 7;
+        return $this->hideActivityColumn ? 7 : 8;
     }
 
     private function lastColLetter(): string
@@ -233,6 +235,7 @@ class AdminBookingExport implements FromArray, WithEvents
         if ($this->minDate) {
             return $this->formatIdDate($this->minDate);
         }
+
         return now()->timezone('Asia/Jakarta')->format('d M Y');
     }
 
@@ -269,8 +272,8 @@ class AdminBookingExport implements FromArray, WithEvents
 
                 // Column widths (approx).
                 $widths = $this->hideActivityColumn
-                    ? ['A' => 6, 'B' => 14, 'C' => 22, 'D' => 16, 'E' => 12, 'F' => 8, 'G' => 10, 'H' => 7, 'I' => 7, 'J' => 10, 'K' => 14, 'L' => 8]
-                    : ['A' => 6, 'B' => 14, 'C' => 22, 'D' => 16, 'E' => 18, 'F' => 12, 'G' => 8, 'H' => 10, 'I' => 7, 'J' => 7, 'K' => 10, 'L' => 14, 'M' => 8];
+                    ? ['A' => 6, 'B' => 14, 'C' => 22, 'D' => 16, 'E' => 18, 'F' => 28, 'G' => 12, 'H' => 8, 'I' => 10, 'J' => 7, 'K' => 7, 'L' => 14, 'M' => 8]
+                    : ['A' => 6, 'B' => 14, 'C' => 22, 'D' => 16, 'E' => 18, 'F' => 28, 'G' => 12, 'H' => 8, 'I' => 10, 'J' => 7, 'K' => 7, 'L' => 10, 'M' => 14, 'N' => 8];
                 foreach ($widths as $col => $w) {
                     $sheet->getColumnDimension($col)->setWidth($w);
                 }

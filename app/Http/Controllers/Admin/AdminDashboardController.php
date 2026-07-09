@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\ProcessBookingExportJob;
 use App\Models\Booking;
 use App\Models\ExportJob;
 use App\Models\Location;
 use App\Models\Zone;
-use App\Jobs\ProcessBookingExportJob;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -130,6 +130,7 @@ class AdminDashboardController extends Controller
                 'customer_name' => $booking->customer_name,
                 'customer_email' => $booking->customer_email,
                 'customer_phone' => $booking->customer_phone,
+                'additional_note' => $booking->additional_note,
                 'activity_type' => $booking->activity_type,
                 'grave_type' => $booking->grave_type,
                 'location' => $booking->location->name ?? '-',
