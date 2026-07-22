@@ -1,10 +1,12 @@
 <?php
 
 use App\Models\User;
+use App\Models\WalkIn;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
@@ -65,7 +67,7 @@ test('walk-in stores normalized data and redirects to a simple success page', fu
         'ethics_confirmed' => true,
     ]);
 
-    $walkIn = \App\Models\WalkIn::query()->firstOrFail();
+    $walkIn = WalkIn::query()->firstOrFail();
 
     $response->assertRedirect(route('walk-in.success', $walkIn->public_token));
     expect($walkIn->customer_name)->toBe('Budi Santoso')
@@ -92,13 +94,11 @@ test('walk-in lot number is optional and limited to ten characters', function ()
 test('only an authenticated admin can replace the ethics image', function () {
     Storage::fake('public');
 
-    $payload = [
+    $this->post('/admin/settings', [
         'discord_webhook_url' => '',
         'discord_notification_time' => '08:00',
         'ethics_image' => UploadedFile::fake()->image('etika.jpg', 1200, 800),
-    ];
-
-    $this->post('/admin/settings', $payload)->assertRedirect('/admin/login');
+    ])->assertRedirect('/login');
 
     $admin = User::query()->create([
         'name' => 'Admin',
@@ -106,7 +106,11 @@ test('only an authenticated admin can replace the ethics image', function () {
         'password' => bcrypt('password'),
     ]);
 
-    $this->actingAs($admin)->post('/admin/settings', $payload)->assertSessionHasNoErrors();
+    $this->actingAs($admin)->post('/admin/settings', [
+        'discord_webhook_url' => '',
+        'discord_notification_time' => '08:00',
+        'ethics_image' => UploadedFile::fake()->image('etika.jpg', 1200, 800),
+    ])->assertSessionHasNoErrors();
 
     $path = DB::table('settings')->where('key', 'ethics_image_path')->value('value');
     expect($path)->not->toBeNull();
@@ -115,4 +119,27 @@ test('only an authenticated admin can replace the ethics image', function () {
 
 test('regular booking also requires ethics consent', function () {
     $this->post('/booking', [])->assertSessionHasErrors('ethics_confirmed');
+});
+
+test('admin can view walk-in data separately from bookings', function () {
+    $admin = User::query()->create([
+        'name' => 'Admin',
+        'email' => 'admin@example.com',
+        'password' => bcrypt('password'),
+    ]);
+    WalkIn::query()->create([
+        'public_token' => (string) Str::ulid(),
+        'customer_name' => 'Budi Santoso',
+        'customer_phone' => '6281234567890',
+        'lot_number' => 'A-12',
+        'ethics_consented_at' => now(),
+    ]);
+
+    $this->actingAs($admin)->get('/admin/dashboard?record_type=walk_in')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('admin/dashboard')
+            ->where('recordType', 'walk_in')
+            ->where('walkIns.0.customer_name', 'Budi Santoso')
+            ->has('bookings', 0));
 });

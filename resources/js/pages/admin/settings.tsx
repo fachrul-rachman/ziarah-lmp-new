@@ -8,7 +8,11 @@ import { AdminLayout } from './../../layouts/admin-layout';
 
 export default function AdminSettings() {
     const page = usePage<{
-        values: { discord_webhook_url: string; discord_notification_time: string };
+        values: {
+            discord_webhook_url: string;
+            discord_notification_time: string;
+            ethics_image_url?: string | null;
+        };
         errors: Record<string, string>;
         csrf_token?: string;
         flash?: { success?: string | null };
@@ -18,10 +22,26 @@ export default function AdminSettings() {
     const errors = page.props.errors ?? {};
     const flash = (page.props as any).flash ?? {};
 
-    const form = useForm({
+    const form = useForm<{
+        discord_webhook_url: string;
+        discord_notification_time: string;
+        ethics_image: File | null;
+    }>({
         discord_webhook_url: values.discord_webhook_url ?? '',
         discord_notification_time: values.discord_notification_time ?? '08:00',
+        ethics_image: null,
     });
+
+    const ethicsImagePreview = React.useMemo(
+        () => (form.data.ethics_image ? URL.createObjectURL(form.data.ethics_image) : values.ethics_image_url ?? null),
+        [form.data.ethics_image, values.ethics_image_url],
+    );
+
+    React.useEffect(() => {
+        return () => {
+            if (ethicsImagePreview?.startsWith('blob:')) URL.revokeObjectURL(ethicsImagePreview);
+        };
+    }, [ethicsImagePreview]);
 
     type Rule = {
         normalized_size: string;
@@ -141,7 +161,7 @@ export default function AdminSettings() {
                             className="space-y-5"
                             onSubmit={(e) => {
                                 e.preventDefault();
-                                form.post('/admin/settings', { preserveScroll: true });
+                                form.post('/admin/settings', { preserveScroll: true, forceFormData: true });
                             }}
                         >
                             <div className="space-y-2">
@@ -172,6 +192,32 @@ export default function AdminSettings() {
                                 </div>
                                 {errors.discord_notification_time ? (
                                     <div className="text-xs text-red-600">{errors.discord_notification_time}</div>
+                                ) : null}
+                            </div>
+
+                            <div className="space-y-3">
+                                <div className="text-sm font-semibold">Foto Konfirmasi Etika Berziarah</div>
+                                {ethicsImagePreview ? (
+                                    <img
+                                        src={ethicsImagePreview}
+                                        alt="Foto konfirmasi etika berziarah saat ini"
+                                        className="max-h-72 w-full rounded-md border bg-gray-50 object-contain"
+                                    />
+                                ) : (
+                                    <div className="flex min-h-32 items-center justify-center rounded-md border bg-gray-50 p-4 text-sm text-gray-600">
+                                        Belum ada foto yang dipasang.
+                                    </div>
+                                )}
+                                <Input
+                                    type="file"
+                                    accept="image/jpeg,image/png,image/webp"
+                                    onChange={(e) => form.setData('ethics_image', e.target.files?.[0] ?? null)}
+                                />
+                                <div className="text-xs text-gray-600">
+                                    Format JPG, PNG, atau WebP. Ukuran maksimal 5 MB.
+                                </div>
+                                {errors.ethics_image ? (
+                                    <div className="text-xs text-red-600">{errors.ethics_image}</div>
                                 ) : null}
                             </div>
 

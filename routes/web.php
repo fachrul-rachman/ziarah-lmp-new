@@ -15,6 +15,7 @@ use App\Http\Controllers\Booking\BookingController;
 use App\Http\Controllers\Booking\BookingSubmitController;
 use App\Http\Controllers\Booking\EventRulesController;
 use App\Http\Controllers\Booking\PublicBookingController;
+use App\Http\Controllers\Booking\WalkInController;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Models\Booking;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -48,6 +49,10 @@ Route::post('/booking/{publicToken}/cancel', [PublicBookingController::class, 'c
 Route::get('/booking/{publicToken}/cancel/success', [PublicBookingController::class, 'cancelSuccess'])->name('booking.cancel.success');
 Route::get('/booking/{publicToken}/reschedule', [PublicBookingController::class, 'rescheduleForm'])->name('booking.reschedule.form');
 Route::post('/booking/{publicToken}/reschedule', [PublicBookingController::class, 'reschedule'])->name('booking.reschedule');
+
+Route::get('/walk-in', [WalkInController::class, 'index'])->name('walk-in.index');
+Route::post('/walk-in', [WalkInController::class, 'store'])->middleware('throttle:10,1')->name('walk-in.store');
+Route::get('/walk-in/success/{publicToken}', [WalkInController::class, 'success'])->name('walk-in.success');
 
 Route::get('/login', fn () => redirect('/admin/login'))->name('login');
 

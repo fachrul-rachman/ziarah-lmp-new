@@ -29,6 +29,15 @@ type BookingRow = {
   status: string
 }
 
+type WalkInRow = {
+  id: number
+  customer_name: string
+  customer_phone: string
+  lot_number?: string | null
+  visited_at: string
+  ethics_consented_at: string
+}
+
 type Option = { id: number; name: string }
 
 function labelActivity(v: string) {
@@ -62,8 +71,11 @@ export default function AdminDashboard() {
       location_id?: number
       zone_id?: number
       status?: string
+      record_type?: "booking" | "walk_in"
     }
     bookings: BookingRow[]
+    walkIns: WalkInRow[]
+    recordType: "booking" | "walk_in"
     pagination: {
       current_page: number
       last_page: number
@@ -79,6 +91,8 @@ export default function AdminDashboard() {
   }>()
 
   const bookings = page.props.bookings ?? []
+  const walkIns = page.props.walkIns ?? []
+  const recordType = page.props.recordType ?? "booking"
   const locations = page.props.locations ?? []
   const zones = page.props.zones ?? []
   const errors = page.props.errors ?? {}
@@ -92,6 +106,7 @@ export default function AdminDashboard() {
     location_id: initialFilters.location_id ? String(initialFilters.location_id) : "",
     zone_id: initialFilters.zone_id ? String(initialFilters.zone_id) : "",
     status: initialFilters.status ?? "",
+    record_type: recordType,
   })
 
   const [cancelId, setCancelId] = React.useState<number | null>(null)
@@ -125,31 +140,62 @@ export default function AdminDashboard() {
   }, [exportJob, pollExportJob])
 
   function applyFilters() {
-    const params: Record<string, string> = {}
+    const params: Record<string, string> = { record_type: recordType }
     if (filters.date_from) params.date_from = filters.date_from
     if (filters.date_to) params.date_to = filters.date_to
-    if (filters.activity_type) params.activity_type = filters.activity_type
-    if (filters.location_id) params.location_id = filters.location_id
-    if (filters.zone_id) params.zone_id = filters.zone_id
-    if (filters.status) params.status = filters.status
+    if (recordType === "booking") {
+      if (filters.activity_type) params.activity_type = filters.activity_type
+      if (filters.location_id) params.location_id = filters.location_id
+      if (filters.zone_id) params.zone_id = filters.zone_id
+      if (filters.status) params.status = filters.status
+    }
     router.get("/admin/dashboard", params, { preserveScroll: true })
   }
 
   function resetFilters() {
-    setFilters({ date_from: "", date_to: "", activity_type: "", location_id: "", zone_id: "", status: "" })
-    router.get("/admin/dashboard", {}, { preserveScroll: true })
+    setFilters({ date_from: "", date_to: "", activity_type: "", location_id: "", zone_id: "", status: "", record_type: recordType })
+    router.get("/admin/dashboard", { record_type: recordType }, { preserveScroll: true })
   }
 
   function doExport() {
-    const payload: Record<string, string> = { format: exportFormat }
+    const payload: Record<string, string> = { format: exportFormat, record_type: recordType }
     if (filters.date_from) payload.date_from = filters.date_from
     if (filters.date_to) payload.date_to = filters.date_to
-    if (filters.activity_type) payload.activity_type = filters.activity_type
-    if (filters.location_id) payload.location_id = filters.location_id
-    if (filters.zone_id) payload.zone_id = filters.zone_id
-    if (filters.status) payload.status = filters.status
+    if (recordType === "booking") {
+      if (filters.activity_type) payload.activity_type = filters.activity_type
+      if (filters.location_id) payload.location_id = filters.location_id
+      if (filters.zone_id) payload.zone_id = filters.zone_id
+      if (filters.status) payload.status = filters.status
+    }
 
     router.post("/admin/exports", payload, { preserveScroll: true })
+  }
+
+  function selectRecordType(type: "booking" | "walk_in") {
+    router.get("/admin/dashboard", { record_type: type }, { preserveScroll: true })
+  }
+
+  function paginationControls() {
+    return (
+      <div className="mt-4 flex flex-wrap gap-2">
+        {page.props.pagination.links.map((link, index) => {
+          const label = link.label.replace(/&laquo;|&raquo;/g, "").trim() || link.label
+          return (
+            <button
+              key={index}
+              type="button"
+              disabled={!link.url}
+              onClick={() => link.url && router.visit(link.url, { preserveScroll: true })}
+              className={`rounded-md border px-3 py-2 text-sm ${
+                link.active ? "bg-gray-900 text-white" : "bg-white"
+              } ${!link.url ? "opacity-50" : ""}`}
+            >
+              {label}
+            </button>
+          )
+        })}
+      </div>
+    )
   }
 
   return (
@@ -157,12 +203,33 @@ export default function AdminDashboard() {
       <Head title="Dashboard" />
       <AdminLayout title="Dashboard">
         <div className="space-y-4">
+          <div className="inline-flex rounded-md border bg-white p-1" role="tablist" aria-label="Jenis laporan">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={recordType === "booking"}
+              className={`min-h-10 rounded px-5 text-sm font-medium ${recordType === "booking" ? "bg-gray-900 text-white" : "text-gray-700"}`}
+              onClick={() => selectRecordType("booking")}
+            >
+              Booking
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={recordType === "walk_in"}
+              className={`min-h-10 rounded px-5 text-sm font-medium ${recordType === "walk_in" ? "bg-gray-900 text-white" : "text-gray-700"}`}
+              onClick={() => selectRecordType("walk_in")}
+            >
+              Walk-in
+            </button>
+          </div>
+
           <Card>
             <CardHeader>
               <CardTitle>Filter</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-3 md:grid-cols-6">
+              <div className={`grid gap-3 ${recordType === "booking" ? "md:grid-cols-6" : "md:grid-cols-2"}`}>
                 <div>
                   <label className="mb-1 block text-sm font-medium">Tanggal dari</label>
                   <Input
@@ -179,6 +246,7 @@ export default function AdminDashboard() {
                     onChange={(e) => setFilters((p) => ({ ...p, date_to: e.target.value }))}
                   />
                 </div>
+                {recordType === "booking" ? <>
                 <div>
                   <label className="mb-1 block text-sm font-medium">Jenis kegiatan</label>
                   <select
@@ -237,6 +305,7 @@ export default function AdminDashboard() {
                     <option value="completed">completed</option>
                   </select>
                 </div>
+                </> : null}
               </div>
 
               {errors.date_from || errors.date_to || errors.activity_type || errors.location_id || errors.zone_id || errors.status ? (
@@ -289,10 +358,53 @@ export default function AdminDashboard() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Tabel Booking</CardTitle>
+              <CardTitle>{recordType === "booking" ? "Tabel Booking" : "Tabel Walk-in"}</CardTitle>
             </CardHeader>
             <CardContent>
-              {bookings.length === 0 ? (
+              {recordType === "walk_in" ? (
+                walkIns.length === 0 ? (
+                  <p className="text-sm text-gray-600">Tidak ada data walk-in ditemukan.</p>
+                ) : (
+                  <>
+                    <div className="hidden md:block">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Nama</TableHead>
+                            <TableHead>Nomor Telepon</TableHead>
+                            <TableHead>Nomor Lot</TableHead>
+                            <TableHead>Waktu Kedatangan</TableHead>
+                            <TableHead>Waktu Persetujuan</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {walkIns.map((walkIn) => (
+                            <TableRow key={walkIn.id}>
+                              <TableCell className="font-medium">{walkIn.customer_name}</TableCell>
+                              <TableCell>{walkIn.customer_phone.startsWith("62") ? `+${walkIn.customer_phone}` : walkIn.customer_phone}</TableCell>
+                              <TableCell>{walkIn.lot_number || "-"}</TableCell>
+                              <TableCell>{walkIn.visited_at}</TableCell>
+                              <TableCell>{walkIn.ethics_consented_at}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                    <div className="grid gap-3 md:hidden">
+                      {walkIns.map((walkIn) => (
+                        <div key={walkIn.id} className="rounded-md border bg-white p-4 text-sm">
+                          <div className="font-semibold">{walkIn.customer_name}</div>
+                          <div className="mt-1 text-gray-700">{walkIn.customer_phone.startsWith("62") ? `+${walkIn.customer_phone}` : walkIn.customer_phone}</div>
+                          <div className="mt-2 text-gray-700">Nomor lot: {walkIn.lot_number || "-"}</div>
+                          <div className="mt-2 text-gray-700">Datang: {walkIn.visited_at}</div>
+                          <div className="mt-1 text-xs text-gray-600">Persetujuan: {walkIn.ethics_consented_at}</div>
+                        </div>
+                      ))}
+                    </div>
+                    {paginationControls()}
+                  </>
+                )
+              ) : bookings.length === 0 ? (
                 <p className="text-sm text-gray-600">Tidak ada booking ditemukan.</p>
               ) : (
                 <>
@@ -387,24 +499,7 @@ export default function AdminDashboard() {
                     ))}
                   </div>
 
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {page.props.pagination.links.map((l, idx) => {
-                      const label = l.label.replace(/&laquo;|&raquo;/g, "").trim() || l.label
-                      return (
-                        <button
-                          key={idx}
-                          type="button"
-                          disabled={!l.url}
-                          onClick={() => l.url && router.visit(l.url, { preserveScroll: true })}
-                          className={`rounded-md border px-3 py-1 text-sm ${
-                            l.active ? "bg-gray-900 text-white" : "bg-white"
-                          } ${!l.url ? "opacity-50" : ""}`}
-                        >
-                          {label}
-                        </button>
-                      )
-                    })}
-                  </div>
+                  {paginationControls()}
                 </>
               )}
             </CardContent>

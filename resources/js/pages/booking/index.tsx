@@ -1,5 +1,7 @@
 import { Head, useForm, usePage } from "@inertiajs/react"
 import * as React from "react"
+
+import { EthicsConfirmationDialog } from "@/components/ethics-confirmation-dialog"
 import { IconMapPin } from "@tabler/icons-react"
 import { IconSearch } from "@tabler/icons-react"
 
@@ -124,6 +126,7 @@ export default function BookingIndex() {
     locations: Location[]
     timeSlots: TimeSlot[]
     errors: Record<string, string>
+    ethics_image_url?: string | null
   }>()
 
   const locations = page.props.locations ?? []
@@ -161,6 +164,7 @@ export default function BookingIndex() {
   const [hiddenFacilityReasons, setHiddenFacilityReasons] = React.useState<HiddenFacilityReason[]>([])
   const [defaultSizeRule, setDefaultSizeRule] = React.useState<LotSizeRule | null>(null)
   const [sizeRules, setSizeRules] = React.useState<Record<string, LotSizeRule>>({})
+  const [confirmationOpen, setConfirmationOpen] = React.useState(false)
 
   const postForm = useForm({
     activity_type: "",
@@ -179,6 +183,7 @@ export default function BookingIndex() {
     customer_email: "",
     customer_phone: "",
     additional_note: "",
+    ethics_confirmed: false,
   })
 
   const minDateYmd = React.useMemo(() => minBookingDateYmd(), [])
@@ -541,7 +546,7 @@ export default function BookingIndex() {
       return
     }
 
-    postForm.setData({
+    const payload = {
       activity_type: state.activity_type,
       location_id: String(state.location_id),
       grave_type: state.grave_type,
@@ -558,9 +563,14 @@ export default function BookingIndex() {
       customer_email: state.email,
       customer_phone: state.phone,
       additional_note: state.additional_note,
-    })
+      ethics_confirmed: true,
+    }
 
-    postForm.post("/booking")
+    postForm.transform(() => payload)
+    postForm.post("/booking", {
+      preserveScroll: true,
+      onError: () => setConfirmationOpen(false),
+    })
   }
 
   return (
@@ -1126,7 +1136,7 @@ export default function BookingIndex() {
                   <button
                     type="button"
                     className="btn-confirm"
-                    onClick={submitBooking}
+                    onClick={() => setConfirmationOpen(true)}
                     disabled={postForm.processing}
                   >
                     {postForm.processing ? "Memproses…" : "Konfirmasi & Kirim Booking"}
@@ -1158,6 +1168,12 @@ export default function BookingIndex() {
           </div>
         </div>
       </div>
+      <EthicsConfirmationDialog
+        open={confirmationOpen}
+        imageUrl={page.props.ethics_image_url}
+        processing={postForm.processing}
+        onConfirm={submitBooking}
+      />
     </>
   )
 }

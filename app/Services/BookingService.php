@@ -38,6 +38,7 @@ class BookingService
      *  customer_email:string,
      *  customer_phone:string,
      *  additional_note?:?string
+     *  ethics_consented_at:\DateTimeInterface
      * } $data
      */
     public function create(array $data): Booking
@@ -79,6 +80,7 @@ class BookingService
                 'customer_email' => $data['customer_email'],
                 'customer_phone' => $data['customer_phone'],
                 'additional_note' => $additionalNote !== '' ? $additionalNote : null,
+                'ethics_consented_at' => $data['ethics_consented_at'],
                 'location_id' => $data['location_id'],
                 'zone_id' => $data['zone_id'],
                 'lot_id' => $data['lot_id'],

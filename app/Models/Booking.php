@@ -16,6 +16,7 @@ class Booking extends Model
         'customer_email',
         'customer_phone',
         'additional_note',
+        'ethics_consented_at',
         'location_id',
         'zone_id',
         'lot_id',
@@ -28,6 +29,7 @@ class Booking extends Model
 
     protected $casts = [
         'visit_date' => 'date',
+        'ethics_consented_at' => 'datetime',
     ];
 
     public function location(): BelongsTo

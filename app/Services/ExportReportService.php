@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Models\Booking;
+use App\Models\WalkIn;
 use App\Services\Exports\AdminBookingExport;
+use App\Services\Exports\AdminWalkInExport;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Storage;
@@ -11,6 +13,45 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class ExportReportService
 {
+    /**
+     * @param  array<string,mixed>  $filters
+     */
+    public function exportWalkIns(string $format, array $filters, ?string $disk = null): string
+    {
+        $disk = $disk ?: (config('exports.disk') ?? config('filesystems.default'));
+        $storage = Storage::disk($disk);
+        [$rows, $minDate, $maxDate] = $this->queryWalkInRows($filters);
+
+        $exportMinDate = ! empty($filters['date_from']) ? (string) $filters['date_from'] : $minDate;
+        $exportMaxDate = ! empty($filters['date_to']) ? (string) $filters['date_to'] : $maxDate;
+        $useDedicatedExportsDisk = $disk === 'exports';
+        if (! $useDedicatedExportsDisk) {
+            $storage->makeDirectory('exports');
+        }
+
+        $base = 'walk_in_export_'.now()->format('Ymd_His');
+        if ($format === 'excel') {
+            $path = $useDedicatedExportsDisk ? "{$base}.xlsx" : "exports/{$base}.xlsx";
+            if (! Excel::store(new AdminWalkInExport($rows, $exportMinDate, $exportMaxDate), $path, $disk)) {
+                throw new \RuntimeException('Gagal menyimpan file export Excel.');
+            }
+
+            return $path;
+        }
+
+        $path = $useDedicatedExportsDisk ? "{$base}.pdf" : "exports/{$base}.pdf";
+        $pdf = Pdf::loadView('pdf.admin-walk-ins-export', [
+            'rows' => $rows,
+            'minDate' => $exportMinDate,
+            'maxDate' => $exportMaxDate,
+        ])->setPaper('a4', 'landscape');
+        if (! $storage->put($path, $pdf->output())) {
+            throw new \RuntimeException('Gagal menyimpan file export PDF.');
+        }
+
+        return $path;
+    }
+
     /**
      * @param  array<string,mixed>  $filters
      */
@@ -182,6 +223,36 @@ class ExportReportService
 
             return 0;
         });
+
+        return [$rows, $minDate, $maxDate];
+    }
+
+    /**
+     * @param  array<string,mixed>  $filters
+     * @return array{0: array<int,array<string,mixed>>, 1: ?string, 2: ?string}
+     */
+    private function queryWalkInRows(array $filters): array
+    {
+        $query = WalkIn::query()->orderBy('created_at')->orderBy('id');
+
+        if (! empty($filters['date_from'])) {
+            $query->whereDate('created_at', '>=', $filters['date_from']);
+        }
+        if (! empty($filters['date_to'])) {
+            $query->whereDate('created_at', '<=', $filters['date_to']);
+        }
+
+        $walkIns = $query->get();
+        $minDate = $walkIns->min(fn (WalkIn $walkIn) => $walkIn->created_at?->format('Y-m-d'));
+        $maxDate = $walkIns->max(fn (WalkIn $walkIn) => $walkIn->created_at?->format('Y-m-d'));
+
+        $rows = $walkIns->map(fn (WalkIn $walkIn): array => [
+            'customer_name' => $walkIn->customer_name,
+            'customer_phone' => $walkIn->customer_phone,
+            'lot_number' => $walkIn->lot_number,
+            'visited_at' => $walkIn->created_at?->timezone('Asia/Jakarta')->translatedFormat('d F Y, H:i'),
+            'ethics_consented_at' => $walkIn->ethics_consented_at?->timezone('Asia/Jakarta')->translatedFormat('d F Y, H:i'),
+        ])->all();
 
         return [$rows, $minDate, $maxDate];
     }

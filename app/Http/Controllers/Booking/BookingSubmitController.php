@@ -39,11 +39,13 @@ class BookingSubmitController extends Controller
             'customer_email' => ['required', 'email', 'max:255'],
             'customer_phone' => ['required', 'string', 'max:32'],
             'additional_note' => ['nullable', 'string', 'max:1000'],
+            'ethics_confirmed' => ['required', 'accepted'],
         ], [
             'customer_name.required' => 'Nama wajib diisi.',
             'customer_email.required' => 'Email wajib diisi.',
             'customer_email.email' => 'Format email tidak valid.',
             'customer_phone.required' => 'Nomor telepon wajib diisi.',
+            'ethics_confirmed.accepted' => 'Persetujuan etika berziarah wajib dicentang.',
         ]);
 
         if ($validated['activity_type'] !== 'ziarah' && $validated['grave_type'] !== 'makam') {
@@ -103,6 +105,7 @@ class BookingSubmitController extends Controller
                 'customer_email' => $validated['customer_email'],
                 'customer_phone' => $validated['customer_phone'],
                 'additional_note' => $validated['additional_note'] ?? null,
+                'ethics_consented_at' => now(),
             ]);
         } catch (\RuntimeException $e) {
             return redirect()->back()->withErrors([

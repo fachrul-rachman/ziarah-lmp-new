@@ -5,19 +5,21 @@ namespace App\Http\Controllers\Booking;
 use App\Http\Controllers\Controller;
 use App\Models\Location;
 use App\Models\TimeSlot;
+use App\Services\EthicsConsentService;
+use App\Services\LotSizeRuleService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Services\LotSizeRuleService;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class BookingController extends Controller
 {
-    public function __construct(private readonly LotSizeRuleService $sizeRules)
-    {
-    }
+    public function __construct(
+        private readonly LotSizeRuleService $sizeRules,
+        private readonly EthicsConsentService $ethicsConsent,
+    ) {}
 
     public function index(): Response
     {
@@ -32,6 +34,7 @@ class BookingController extends Controller
             ->get()
             ->map(function (TimeSlot $slot) {
                 $start = CarbonImmutable::parse($slot->start_time)->format('H:i');
+
                 return [
                     'id' => $slot->id,
                     'start_time' => $start,
@@ -43,6 +46,7 @@ class BookingController extends Controller
         return Inertia::render('booking/index', [
             'locations' => $locations,
             'timeSlots' => $timeSlots,
+            'ethics_image_url' => $this->ethicsConsent->imageUrl(),
         ]);
     }
 

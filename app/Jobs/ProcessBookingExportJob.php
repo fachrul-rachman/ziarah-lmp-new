@@ -14,9 +14,7 @@ class ProcessBookingExportJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public function __construct(public readonly int $exportJobId)
-    {
-    }
+    public function __construct(public readonly int $exportJobId) {}
 
     public function handle(ExportReportService $service): void
     {
@@ -32,7 +30,10 @@ class ProcessBookingExportJob implements ShouldQueue
 
         try {
             $disk = $exportJob->disk ?: (config('exports.disk') ?? config('filesystems.default'));
-            $filePath = $service->exportBookings($exportJob->format, (array) $exportJob->filters_json, $disk);
+            $filters = (array) $exportJob->filters_json;
+            $filePath = ($filters['record_type'] ?? 'booking') === 'walk_in'
+                ? $service->exportWalkIns($exportJob->format, $filters, $disk)
+                : $service->exportBookings($exportJob->format, $filters, $disk);
             $exportJob->update([
                 'status' => 'completed',
                 'file_path' => $filePath,

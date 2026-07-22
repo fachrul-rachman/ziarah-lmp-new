@@ -7,6 +7,7 @@ use App\Jobs\ProcessBookingExportJob;
 use App\Models\Booking;
 use App\Models\ExportJob;
 use App\Models\Location;
+use App\Models\WalkIn;
 use App\Models\Zone;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
@@ -28,7 +29,13 @@ class AdminDashboardController extends Controller
             'location_id' => ['nullable', 'integer', 'exists:locations,id'],
             'zone_id' => ['nullable', 'integer', 'exists:zones,id'],
             'status' => ['nullable', 'string', 'in:confirmed,rescheduled,cancelled,completed'],
+            'record_type' => ['nullable', 'string', 'in:booking,walk_in'],
         ]);
+
+        $recordType = $filters['record_type'] ?? 'booking';
+        if ($recordType === 'walk_in') {
+            return $this->walkInIndex($request, $filters);
+        }
 
         $q = Booking::query()
             ->with(['location:id,name', 'zone:id,name', 'lot:id,lot_number,size', 'timeSlot:id,start_time', 'facilities'])
@@ -90,6 +97,8 @@ class AdminDashboardController extends Controller
         return Inertia::render('admin/dashboard', [
             'filters' => $filters,
             'bookings' => $bookings,
+            'walkIns' => [],
+            'recordType' => 'booking',
             'pagination' => [
                 'current_page' => $paginator->currentPage(),
                 'last_page' => $paginator->lastPage(),
@@ -131,6 +140,7 @@ class AdminDashboardController extends Controller
                 'customer_email' => $booking->customer_email,
                 'customer_phone' => $booking->customer_phone,
                 'additional_note' => $booking->additional_note,
+                'ethics_consented_at' => $booking->ethics_consented_at?->timezone('Asia/Jakarta')->format('d M Y, H:i'),
                 'activity_type' => $booking->activity_type,
                 'grave_type' => $booking->grave_type,
                 'location' => $booking->location->name ?? '-',
@@ -176,6 +186,7 @@ class AdminDashboardController extends Controller
             'location_id' => ['nullable', 'integer', 'exists:locations,id'],
             'zone_id' => ['nullable', 'integer', 'exists:zones,id'],
             'status' => ['nullable', 'string', 'in:confirmed,rescheduled,cancelled,completed'],
+            'record_type' => ['nullable', 'string', 'in:booking,walk_in'],
         ]);
 
         $disk = (string) (config('exports.disk') ?? config('filesystems.default'));
@@ -236,5 +247,47 @@ class AdminDashboardController extends Controller
         }
 
         return Storage::disk($disk)->download($path);
+    }
+
+    /**
+     * @param  array<string, mixed>  $filters
+     */
+    private function walkInIndex(Request $request, array $filters): Response
+    {
+        $query = WalkIn::query()->orderByDesc('created_at')->orderByDesc('id');
+
+        if (! empty($filters['date_from'])) {
+            $query->whereDate('created_at', '>=', $filters['date_from']);
+        }
+        if (! empty($filters['date_to'])) {
+            $query->whereDate('created_at', '<=', $filters['date_to']);
+        }
+
+        $paginator = $query->paginate(25)->withQueryString();
+        $walkIns = collect($paginator->items())->map(fn (WalkIn $walkIn): array => [
+            'id' => $walkIn->id,
+            'customer_name' => $walkIn->customer_name,
+            'customer_phone' => $walkIn->customer_phone,
+            'lot_number' => $walkIn->lot_number,
+            'visited_at' => $walkIn->created_at?->timezone('Asia/Jakarta')->format('d M Y, H:i'),
+            'ethics_consented_at' => $walkIn->ethics_consented_at?->timezone('Asia/Jakarta')->format('d M Y, H:i'),
+        ])->values();
+
+        return Inertia::render('admin/dashboard', [
+            'filters' => $filters,
+            'bookings' => [],
+            'walkIns' => $walkIns,
+            'recordType' => 'walk_in',
+            'pagination' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+                'links' => $paginator->linkCollection(),
+            ],
+            'locations' => [],
+            'zones' => [],
+            'latestExportJobId' => $request->session()->get('export_job_id'),
+        ]);
     }
 }

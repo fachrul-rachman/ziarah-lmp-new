@@ -13,6 +13,7 @@ type Booking = {
   customer_email: string
   customer_phone?: string | null
   additional_note?: string | null
+  ethics_consented_at?: string | null
   activity_type: string
   grave_type: string
   location: string
@@ -135,6 +136,14 @@ export default function AdminBookingDetail() {
                     <div className="font-medium whitespace-pre-line">{booking.additional_note}</div>
                   </div>
                 ) : null}
+                <div className="sm:col-span-2">
+                  <div className="text-gray-600">Persetujuan Etika Berziarah</div>
+                  <div className="font-medium">
+                    {booking.ethics_consented_at
+                      ? `Disetujui pada ${booking.ethics_consented_at}`
+                      : "Belum tercatat (booking lama)"}
+                  </div>
+                </div>
               </div>
 
               <div className="mt-3 rounded-md border bg-white p-3">
