@@ -117,6 +117,28 @@ test('only an authenticated admin can replace the ethics image', function () {
     Storage::disk('public')->assertExists($path);
 });
 
+test('ethics image upload rejects files larger than two megabytes', function () {
+    Storage::fake('public');
+
+    $admin = User::query()->create([
+        'name' => 'Admin',
+        'email' => 'admin-upload-limit@example.com',
+        'password' => bcrypt('password'),
+    ]);
+
+    $oversizedImage = UploadedFile::fake()
+        ->image('etika-besar.jpg', 1200, 800)
+        ->size(2500);
+
+    $this->actingAs($admin)->post('/admin/settings', [
+        'discord_webhook_url' => '',
+        'discord_notification_time' => '08:00',
+        'ethics_image' => $oversizedImage,
+    ])->assertSessionHasErrors('ethics_image');
+
+    expect(DB::table('settings')->where('key', 'ethics_image_path')->exists())->toBeFalse();
+});
+
 test('regular booking also requires ethics consent', function () {
     $this->post('/booking', [])->assertSessionHasErrors('ethics_confirmed');
 });
