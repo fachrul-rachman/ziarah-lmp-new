@@ -98,16 +98,22 @@ export default function WalkInIndex() {
                                 inputMode="tel"
                                 autoComplete="tel"
                                 placeholder="Contoh: 081234567890"
-                                maxLength={32}
+                                minLength={10}
+                                maxLength={13}
+                                pattern="(?:08|62)[0-9]{8,11}"
+                                title="Gunakan 10 sampai 13 angka dan awali dengan 08 atau 62"
                                 required
                                 value={form.data.customer_phone}
                                 onChange={(event) =>
                                     form.setData(
                                         'customer_phone',
-                                        event.target.value,
+                                        event.target.value.replace(/\D/g, ''),
                                     )
                                 }
                             />
+                            <p className="text-sm text-gray-600">
+                                Gunakan 10-13 angka, diawali 08 atau 62.
+                            </p>
                             {errors.customer_phone ? (
                                 <p className="text-sm text-red-700">
                                     {errors.customer_phone}

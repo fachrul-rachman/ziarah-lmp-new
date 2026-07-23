@@ -43,22 +43,21 @@ class Normalization
      *
      * @throws \RuntimeException when invalid.
      */
-    public static function normalizePhoneId(string $value, int $minDigits = 10, int $maxDigits = 15): string
+    public static function normalizePhoneId(string $value, int $minDigits = 10, int $maxDigits = 13): string
     {
         $raw = self::normalizeText($value);
+
+        if ($raw !== '' && ! preg_match('/^\+?[0-9\s().-]+$/', $raw)) {
+            throw new \RuntimeException('Nomor telepon hanya boleh berisi angka.');
+        }
+
         $digits = preg_replace('/\D+/', '', $raw) ?? '';
 
         if ($digits === '') {
             throw new \RuntimeException('Nomor telepon wajib diisi.');
         }
 
-        // Convert leading 0 -> 62
-        if (str_starts_with($digits, '0')) {
-            $digits = '62'.substr($digits, 1);
-        }
-
-        // Only allow numbers starting with 62
-        if (! str_starts_with($digits, '62')) {
+        if (! str_starts_with($digits, '08') && ! str_starts_with($digits, '62')) {
             throw new \RuntimeException('Nomor telepon harus diawali 08 atau 62.');
         }
 
@@ -68,6 +67,10 @@ class Normalization
         }
         if ($len > $maxDigits) {
             throw new \RuntimeException("Nomor telepon terlalu panjang (maksimal {$maxDigits} digit).");
+        }
+
+        if (str_starts_with($digits, '08')) {
+            $digits = '62'.substr($digits, 1);
         }
 
         return $digits;

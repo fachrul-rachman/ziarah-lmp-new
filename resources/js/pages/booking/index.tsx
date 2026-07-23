@@ -1059,10 +1059,18 @@ export default function BookingIndex() {
                     <input
                       className="inp"
                       type="tel"
+                      inputMode="numeric"
                       placeholder="cth. 081234567890 atau 6281234567890"
+                      minLength={10}
+                      maxLength={13}
+                      pattern="(?:08|62)[0-9]{8,11}"
+                      title="Gunakan 10 sampai 13 angka dan awali dengan 08 atau 62"
                       value={state.phone}
-                      onChange={(e) => setState((p) => ({ ...p, phone: e.target.value }))}
+                      onChange={(e) => setState((p) => ({ ...p, phone: e.target.value.replace(/\D/g, "") }))}
                     />
+                    <p style={{ marginTop: 6, fontSize: 12, color: "var(--muted)" }}>
+                      Gunakan 10-13 angka, diawali 08 atau 62.
+                    </p>
                     {errors.customer_phone ? (
                       <p style={{ marginTop: 6, fontSize: 12, color: "var(--color-text-danger)" }}>
                         {errors.customer_phone}

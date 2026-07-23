@@ -98,6 +98,19 @@ test('walk-in rejects phone numbers with invalid length or prefix', function (st
     'contains letters' => '08abc12345678',
 ]);
 
+test('walk-in accepts phone numbers at the minimum and maximum length', function (string $phone) {
+    $this->post('/walk-in', [
+        'customer_name' => 'Budi Santoso',
+        'customer_phone' => $phone,
+        'ethics_confirmed' => true,
+    ])->assertSessionHasNoErrors();
+
+    $this->assertDatabaseCount('walk_ins', 1);
+})->with([
+    '10 digits' => '0812345678',
+    '13 digits' => '6281234567890',
+]);
+
 test('walk-in lot number is optional and limited to ten characters', function () {
     $this->post('/walk-in', [
         'customer_name' => 'Budi Santoso',
