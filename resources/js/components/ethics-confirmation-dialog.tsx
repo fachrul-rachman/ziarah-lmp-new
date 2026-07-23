@@ -63,7 +63,7 @@ export function EthicsConfirmationDialog({
                 <label className="flex cursor-pointer items-start gap-3 rounded-md border-2 border-[#c9a84c]/50 bg-[#c9a84c]/10 p-4 text-base leading-6 text-[#1a2744]">
                     <input
                         type="checkbox"
-                        className="mt-1 h-6 w-6 shrink-0 accent-[#1a2744]"
+                        className="mt-1 h-6 w-6 shrink-0 accent-[#06038D]"
                         checked={confirmed}
                         onChange={(event) => setConfirmed(event.target.checked)}
                     />
