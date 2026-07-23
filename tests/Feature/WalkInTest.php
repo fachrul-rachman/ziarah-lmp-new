@@ -82,6 +82,22 @@ test('walk-in stores normalized data and redirects to a simple success page', fu
             ->where('walkIn.customer_name', 'Budi Santoso'));
 });
 
+test('walk-in rejects phone numbers with invalid length or prefix', function (string $phone) {
+    $this->post('/walk-in', [
+        'customer_name' => 'Budi Santoso',
+        'customer_phone' => $phone,
+        'ethics_confirmed' => true,
+    ])->assertSessionHasErrors('customer_phone');
+
+    $this->assertDatabaseCount('walk_ins', 0);
+})->with([
+    'fewer than 10 digits' => '081234567',
+    'more than 13 digits' => '08123456789012',
+    'starts with 02' => '0212345678',
+    'starts with a single 2' => '2123456789',
+    'contains letters' => '08abc12345678',
+]);
+
 test('walk-in lot number is optional and limited to ten characters', function () {
     $this->post('/walk-in', [
         'customer_name' => 'Budi Santoso',
