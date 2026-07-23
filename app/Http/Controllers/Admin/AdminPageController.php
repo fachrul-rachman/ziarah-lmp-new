@@ -55,14 +55,14 @@ class AdminPageController extends Controller
         $validated = $request->validate([
             'discord_webhook_url' => ['nullable', 'string', 'max:2000', 'url'],
             'discord_notification_time' => ['required', 'string', 'regex:/^([01]\\d|2[0-3]):[0-5]\\d$/'],
-            'ethics_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'ethics_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ], [
             'discord_notification_time.required' => 'Jam kirim wajib diisi.',
             'discord_notification_time.regex' => 'Format jam harus HH:MM (00-23).',
             'discord_webhook_url.url' => 'Format URL tidak valid.',
             'ethics_image.image' => 'File etika berziarah harus berupa gambar.',
             'ethics_image.mimes' => 'Gambar harus berformat JPG, PNG, atau WebP.',
-            'ethics_image.max' => 'Ukuran gambar maksimal 5 MB.',
+            'ethics_image.max' => 'Ukuran gambar setelah diperkecil maksimal 2 MB.',
         ]);
 
         // Allow webhook empty string (treated as disabled)

@@ -33,14 +33,14 @@ export function EthicsConfirmationDialog({
     return (
         <Dialog open={open} onOpenChange={() => undefined}>
             <DialogContent
-                className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-xl"
+                className="max-h-[calc(100vh-2rem)] overflow-y-auto border-2 border-[#1a2744]/25 border-t-[3px] border-t-[#c9a84c] sm:max-w-xl"
                 showCloseButton={false}
                 onEscapeKeyDown={(event) => event.preventDefault()}
                 onPointerDownOutside={(event) => event.preventDefault()}
                 onInteractOutside={(event) => event.preventDefault()}
             >
                 <DialogHeader>
-                    <DialogTitle className="text-xl leading-7">
+                    <DialogTitle className="text-xl leading-7 text-[#1a2744]">
                         Konfirmasi Etika Berziarah
                     </DialogTitle>
                     <DialogDescription className="text-base leading-6">
@@ -60,10 +60,10 @@ export function EthicsConfirmationDialog({
                     </div>
                 )}
 
-                <label className="flex cursor-pointer items-start gap-3 rounded-md border border-emerald-200 bg-emerald-50 p-4 text-base leading-6 text-gray-900">
+                <label className="flex cursor-pointer items-start gap-3 rounded-md border-2 border-[#c9a84c]/50 bg-[#c9a84c]/10 p-4 text-base leading-6 text-[#1a2744]">
                     <input
                         type="checkbox"
-                        className="mt-1 h-6 w-6 shrink-0 accent-emerald-700"
+                        className="mt-1 h-6 w-6 shrink-0 accent-[#1a2744]"
                         checked={confirmed}
                         onChange={(event) => setConfirmed(event.target.checked)}
                     />
@@ -76,7 +76,7 @@ export function EthicsConfirmationDialog({
                 <DialogFooter>
                     <Button
                         type="button"
-                        className="min-h-12 w-full bg-emerald-700 text-base hover:bg-emerald-800 sm:w-auto"
+                        className="min-h-12 w-full bg-[#1a2744] text-base hover:bg-[#243359] sm:w-auto"
                         disabled={!confirmed || processing}
                         onClick={confirmAndReset}
                     >

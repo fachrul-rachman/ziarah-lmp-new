@@ -1,10 +1,11 @@
 import { Head, useForm, usePage } from '@inertiajs/react';
 import * as React from 'react';
 
+import { Button } from './../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './../../components/ui/card';
 import { Input } from './../../components/ui/input';
-import { Button } from './../../components/ui/button';
 import { AdminLayout } from './../../layouts/admin-layout';
+import { prepareImageUpload } from './../../lib/prepare-image-upload';
 
 export default function AdminSettings() {
     const page = usePage<{
@@ -31,6 +32,32 @@ export default function AdminSettings() {
         discord_notification_time: values.discord_notification_time ?? '08:00',
         ethics_image: null,
     });
+
+    const [imagePreparing, setImagePreparing] = React.useState(false);
+    const [imageError, setImageError] = React.useState<string | null>(null);
+
+    async function handleEthicsImageChange(event: React.ChangeEvent<HTMLInputElement>) {
+        const file = event.target.files?.[0] ?? null;
+        setImageError(null);
+
+        if (!file) {
+            form.setData('ethics_image', null);
+
+            return;
+        }
+
+        setImagePreparing(true);
+
+        try {
+            form.setData('ethics_image', await prepareImageUpload(file));
+        } catch (error) {
+            form.setData('ethics_image', null);
+            event.target.value = '';
+            setImageError(error instanceof Error ? error.message : 'Foto gagal disiapkan.');
+        } finally {
+            setImagePreparing(false);
+        }
+    }
 
     const ethicsImagePreview = React.useMemo(
         () => (form.data.ethics_image ? URL.createObjectURL(form.data.ethics_image) : values.ethics_image_url ?? null),
@@ -211,18 +238,23 @@ export default function AdminSettings() {
                                 <Input
                                     type="file"
                                     accept="image/jpeg,image/png,image/webp"
-                                    onChange={(e) => form.setData('ethics_image', e.target.files?.[0] ?? null)}
+                                    disabled={imagePreparing}
+                                    onChange={handleEthicsImageChange}
                                 />
                                 <div className="text-xs text-gray-600">
-                                    Format JPG, PNG, atau WebP. Ukuran maksimal 5 MB.
+                                    Format JPG, PNG, atau WebP. Foto awal maksimal 12 MB dan akan diperkecil otomatis.
                                 </div>
+                                {imagePreparing ? (
+                                    <div className="text-xs font-medium text-[#1a2744]">Menyiapkan foto...</div>
+                                ) : null}
+                                {imageError ? <div className="text-xs text-red-600">{imageError}</div> : null}
                                 {errors.ethics_image ? (
                                     <div className="text-xs text-red-600">{errors.ethics_image}</div>
                                 ) : null}
                             </div>
 
                             <div className="flex items-center gap-3">
-                                <Button type="submit" disabled={form.processing}>
+                                <Button type="submit" disabled={form.processing || imagePreparing}>
                                     {form.processing ? 'Menyimpan…' : 'Simpan'}
                                 </Button>
                             </div>

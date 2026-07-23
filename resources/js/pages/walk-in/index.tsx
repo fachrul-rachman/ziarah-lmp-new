@@ -41,19 +41,19 @@ export default function WalkInIndex() {
     return (
         <>
             <Head title="Walk-in Ziarah" />
-            <main className="min-h-screen bg-gray-100 px-4 py-8 sm:py-12">
+            <main className="min-h-screen bg-[#f7f8fa] px-4 py-8 sm:py-12">
                 <div className="mx-auto max-w-xl">
                     <header className="mb-7 text-center">
-                        <p className="text-sm font-semibold text-emerald-700">
+                        <p className="text-sm font-semibold text-[#9b7927]">
                             Lestari Memorial Park
                         </p>
-                        <h1 className="mt-2 text-3xl font-bold text-gray-950">
+                        <h1 className="mt-2 text-3xl font-bold text-[#1a2744]">
                             Walk-in Ziarah
                         </h1>
                     </header>
 
                     <form
-                        className="space-y-6 rounded-lg border bg-white p-5 shadow-sm sm:p-8"
+                        className="relative space-y-6 overflow-hidden rounded-lg border-2 border-[#1a2744]/25 bg-white p-5 pt-7 shadow-[0_1px_4px_rgba(26,39,68,0.06)] before:absolute before:inset-x-0 before:top-0 before:h-[3px] before:bg-[#c9a84c] sm:p-8 sm:pt-9"
                         onSubmit={openConfirmation}
                     >
                         <div className="space-y-2">
@@ -65,7 +65,7 @@ export default function WalkInIndex() {
                             </label>
                             <Input
                                 id="customer_name"
-                                className="h-12 text-base"
+                                className="h-12 border-2 border-[#1a2744]/15 bg-[#f7f8fa] text-base focus-visible:border-[#1a2744] focus-visible:ring-[#1a2744]/10"
                                 autoComplete="name"
                                 maxLength={255}
                                 required
@@ -93,7 +93,7 @@ export default function WalkInIndex() {
                             </label>
                             <Input
                                 id="customer_phone"
-                                className="h-12 text-base"
+                                className="h-12 border-2 border-[#1a2744]/15 bg-[#f7f8fa] text-base focus-visible:border-[#1a2744] focus-visible:ring-[#1a2744]/10"
                                 type="tel"
                                 inputMode="tel"
                                 autoComplete="tel"
@@ -127,7 +127,7 @@ export default function WalkInIndex() {
                             </label>
                             <Input
                                 id="lot_number"
-                                className="h-12 text-base"
+                                className="h-12 border-2 border-[#1a2744]/15 bg-[#f7f8fa] text-base focus-visible:border-[#1a2744] focus-visible:ring-[#1a2744]/10"
                                 maxLength={10}
                                 placeholder="Ketik nomor lot"
                                 value={form.data.lot_number}
@@ -150,7 +150,7 @@ export default function WalkInIndex() {
 
                         <Button
                             type="submit"
-                            className="min-h-12 w-full bg-emerald-700 text-base hover:bg-emerald-800"
+                            className="min-h-12 w-full bg-[#1a2744] text-base hover:bg-[#243359]"
                         >
                             Lanjut ke Konfirmasi
                         </Button>
