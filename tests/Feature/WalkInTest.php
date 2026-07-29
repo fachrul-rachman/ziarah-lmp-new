@@ -2,6 +2,7 @@
 
 use App\Models\User;
 use App\Models\WalkIn;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Schema;
@@ -193,7 +194,11 @@ test('admin can save the booking notice and its image', function () {
         ->and(DB::table('settings')->where('key', 'booking_notice_image_path')->value('value'))->not->toBeNull();
 });
 
-test('expired booking notice is not shown to customers', function () {
+test('booking notice is shown during its date range and hidden after it expires', function () {
+    CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-07-29 12:00:00', 'Asia/Jakarta'));
+    Storage::fake('public');
+    Storage::disk('public')->put('booking-notices/jalur.jpg', 'image');
+
     Schema::create('locations', function (Blueprint $table) {
         $table->id();
         $table->string('name');
@@ -207,17 +212,28 @@ test('expired booking notice is not shown to customers', function () {
 
     DB::table('settings')->insert([
         ['key' => 'booking_notice_enabled', 'value' => '1'],
-        ['key' => 'booking_notice_title', 'value' => 'Pengumuman Lama'],
-        ['key' => 'booking_notice_body', 'value' => 'Sudah tidak berlaku.'],
+        ['key' => 'booking_notice_title', 'value' => 'Perubahan Jalur'],
+        ['key' => 'booking_notice_body', 'value' => 'Gunakan pintu sementara.'],
         ['key' => 'booking_notice_start_date', 'value' => '2026-07-01'],
-        ['key' => 'booking_notice_end_date', 'value' => '2026-07-20'],
+        ['key' => 'booking_notice_end_date', 'value' => '2026-08-05'],
+        ['key' => 'booking_notice_image_path', 'value' => 'booking-notices/jalur.jpg'],
     ]);
 
     $this->get('/')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('booking/index')
+            ->where('booking_notice.title', 'Perubahan Jalur')
+            ->where('booking_notice.download_url', Storage::disk('public')->url('booking-notices/jalur.jpg')));
+
+    DB::table('settings')->where('key', 'booking_notice_end_date')->update(['value' => '2026-07-20']);
+
+    $this->get('/')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
             ->where('booking_notice', null));
+
+    CarbonImmutable::setTestNow();
 });
 
 test('regular booking also requires ethics consent', function () {

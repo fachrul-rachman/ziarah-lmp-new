@@ -2,6 +2,7 @@ import { Head, useForm, usePage } from "@inertiajs/react"
 import * as React from "react"
 
 import { EthicsConfirmationDialog } from "@/components/ethics-confirmation-dialog"
+import { IconDownload } from "@tabler/icons-react"
 import { IconMapPin } from "@tabler/icons-react"
 import { IconSearch } from "@tabler/icons-react"
 
@@ -22,6 +23,12 @@ type LotSizeRule = {
   lamp_allowed: boolean
 }
 type HiddenFacilityReason = { facility_key: string; event_names: string[] }
+type BookingNotice = {
+  title: string
+  body: string
+  image_url?: string | null
+  download_url?: string | null
+}
 
 const STEPS = ["Lokasi", "Zona & Lot", "Fasilitas", "Data Diri"] as const
 
@@ -127,6 +134,7 @@ export default function BookingIndex() {
     timeSlots: TimeSlot[]
     errors: Record<string, string>
     ethics_image_url?: string | null
+    booking_notice?: BookingNotice | null
   }>()
 
   const locations = page.props.locations ?? []
@@ -637,6 +645,37 @@ export default function BookingIndex() {
 
               {state.step === 1 ? (
                 <div className="space">
+                  {page.props.booking_notice ? (
+                    <section
+                      className="rounded-lg border-2 border-[#c9a84c]/50 bg-[#c9a84c]/10 p-3"
+                      aria-label="Informasi penting"
+                    >
+                      <h3 className="text-sm font-semibold text-[#1a2744]">
+                        {page.props.booking_notice.title}
+                      </h3>
+                      <p className="mt-1 whitespace-pre-line text-sm leading-5 text-[#3d4864]">
+                        {page.props.booking_notice.body}
+                      </p>
+                      {page.props.booking_notice.image_url ? (
+                        <img
+                          src={page.props.booking_notice.image_url}
+                          alt={page.props.booking_notice.title}
+                          className="mt-3 max-h-72 w-full rounded-md border bg-white object-contain"
+                        />
+                      ) : null}
+                      {page.props.booking_notice.download_url ? (
+                        <a
+                          href={page.props.booking_notice.download_url}
+                          download
+                          className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-md bg-[#06038D] px-4 py-2 text-sm font-semibold text-white hover:bg-[#050276]"
+                        >
+                          <IconDownload size={18} aria-hidden="true" />
+                          Unduh Foto
+                        </a>
+                      ) : null}
+                    </section>
+                  ) : null}
+
                   <div>
                     <label className="field-label">Jenis kegiatan</label>
                     <div className="sel-wrap">

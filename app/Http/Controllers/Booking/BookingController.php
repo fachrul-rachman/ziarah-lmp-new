@@ -11,6 +11,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -43,10 +44,38 @@ class BookingController extends Controller
             })
             ->values();
 
+        $noticeRows = DB::table('settings')->whereIn('key', [
+            'booking_notice_enabled',
+            'booking_notice_title',
+            'booking_notice_body',
+            'booking_notice_start_date',
+            'booking_notice_end_date',
+            'booking_notice_image_path',
+        ])->pluck('value', 'key');
+        $today = CarbonImmutable::now('Asia/Jakarta')->toDateString();
+        $noticeActive = $noticeRows->get('booking_notice_enabled') === '1'
+            && $noticeRows->get('booking_notice_start_date', '') <= $today
+            && $noticeRows->get('booking_notice_end_date', '') >= $today;
+        $notice = null;
+
+        if ($noticeActive) {
+            $imagePath = (string) $noticeRows->get('booking_notice_image_path', '');
+            $imageUrl = $imagePath !== '' && Storage::disk('public')->exists($imagePath)
+                ? Storage::disk('public')->url($imagePath)
+                : null;
+            $notice = [
+                'title' => (string) $noticeRows->get('booking_notice_title', ''),
+                'body' => (string) $noticeRows->get('booking_notice_body', ''),
+                'image_url' => $imageUrl,
+                'download_url' => $imageUrl,
+            ];
+        }
+
         return Inertia::render('booking/index', [
             'locations' => $locations,
             'timeSlots' => $timeSlots,
             'ethics_image_url' => $this->ethicsConsent->imageUrl(),
+            'booking_notice' => $notice,
         ]);
     }
 

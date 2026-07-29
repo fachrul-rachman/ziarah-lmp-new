@@ -13,6 +13,12 @@ export default function AdminSettings() {
             discord_webhook_url: string;
             discord_notification_time: string;
             ethics_image_url?: string | null;
+            booking_notice_enabled: boolean;
+            booking_notice_title: string;
+            booking_notice_body: string;
+            booking_notice_start_date: string;
+            booking_notice_end_date: string;
+            booking_notice_image_url?: string | null;
         };
         errors: Record<string, string>;
         csrf_token?: string;
@@ -27,14 +33,28 @@ export default function AdminSettings() {
         discord_webhook_url: string;
         discord_notification_time: string;
         ethics_image: File | null;
+        booking_notice_enabled: boolean;
+        booking_notice_title: string;
+        booking_notice_body: string;
+        booking_notice_start_date: string;
+        booking_notice_end_date: string;
+        booking_notice_image: File | null;
     }>({
         discord_webhook_url: values.discord_webhook_url ?? '',
         discord_notification_time: values.discord_notification_time ?? '08:00',
         ethics_image: null,
+        booking_notice_enabled: values.booking_notice_enabled ?? false,
+        booking_notice_title: values.booking_notice_title ?? '',
+        booking_notice_body: values.booking_notice_body ?? '',
+        booking_notice_start_date: values.booking_notice_start_date ?? '',
+        booking_notice_end_date: values.booking_notice_end_date ?? '',
+        booking_notice_image: null,
     });
 
     const [imagePreparing, setImagePreparing] = React.useState(false);
     const [imageError, setImageError] = React.useState<string | null>(null);
+    const [noticeImagePreparing, setNoticeImagePreparing] = React.useState(false);
+    const [noticeImageError, setNoticeImageError] = React.useState<string | null>(null);
 
     async function handleEthicsImageChange(event: React.ChangeEvent<HTMLInputElement>) {
         const file = event.target.files?.[0] ?? null;
@@ -59,9 +79,39 @@ export default function AdminSettings() {
         }
     }
 
+    async function handleNoticeImageChange(event: React.ChangeEvent<HTMLInputElement>) {
+        const file = event.target.files?.[0] ?? null;
+        setNoticeImageError(null);
+
+        if (!file) {
+            form.setData('booking_notice_image', null);
+
+            return;
+        }
+
+        setNoticeImagePreparing(true);
+
+        try {
+            form.setData('booking_notice_image', await prepareImageUpload(file));
+        } catch (error) {
+            form.setData('booking_notice_image', null);
+            event.target.value = '';
+            setNoticeImageError(error instanceof Error ? error.message : 'Foto gagal disiapkan.');
+        } finally {
+            setNoticeImagePreparing(false);
+        }
+    }
+
     const ethicsImagePreview = React.useMemo(
         () => (form.data.ethics_image ? URL.createObjectURL(form.data.ethics_image) : values.ethics_image_url ?? null),
         [form.data.ethics_image, values.ethics_image_url],
+    );
+    const noticeImagePreview = React.useMemo(
+        () =>
+            form.data.booking_notice_image
+                ? URL.createObjectURL(form.data.booking_notice_image)
+                : values.booking_notice_image_url ?? null,
+        [form.data.booking_notice_image, values.booking_notice_image_url],
     );
 
     React.useEffect(() => {
@@ -69,6 +119,12 @@ export default function AdminSettings() {
             if (ethicsImagePreview?.startsWith('blob:')) URL.revokeObjectURL(ethicsImagePreview);
         };
     }, [ethicsImagePreview]);
+
+    React.useEffect(() => {
+        return () => {
+            if (noticeImagePreview?.startsWith('blob:')) URL.revokeObjectURL(noticeImagePreview);
+        };
+    }, [noticeImagePreview]);
 
     type Rule = {
         normalized_size: string;
@@ -222,6 +278,102 @@ export default function AdminSettings() {
                                 ) : null}
                             </div>
 
+                            <div className="space-y-4 border-t pt-5">
+                                <label className="flex items-center gap-3 text-sm font-semibold">
+                                    <input
+                                        type="checkbox"
+                                        className="h-5 w-5 accent-[#06038D]"
+                                        checked={form.data.booking_notice_enabled}
+                                        onChange={(e) => form.setData('booking_notice_enabled', e.target.checked)}
+                                    />
+                                    Tampilkan Informasi di Awal Form Booking
+                                </label>
+
+                                <div className="space-y-2">
+                                    <div className="text-sm font-semibold">Judul Informasi</div>
+                                    <Input
+                                        maxLength={255}
+                                        required={form.data.booking_notice_enabled}
+                                        value={form.data.booking_notice_title}
+                                        onChange={(e) => form.setData('booking_notice_title', e.target.value)}
+                                    />
+                                    {errors.booking_notice_title ? (
+                                        <div className="text-xs text-red-600">{errors.booking_notice_title}</div>
+                                    ) : null}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <div className="text-sm font-semibold">Isi Informasi</div>
+                                    <textarea
+                                        className="min-h-28 w-full rounded-md border px-3 py-2 text-sm"
+                                        maxLength={2000}
+                                        required={form.data.booking_notice_enabled}
+                                        value={form.data.booking_notice_body}
+                                        onChange={(e) => form.setData('booking_notice_body', e.target.value)}
+                                    />
+                                    {errors.booking_notice_body ? (
+                                        <div className="text-xs text-red-600">{errors.booking_notice_body}</div>
+                                    ) : null}
+                                </div>
+
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                    <div className="space-y-2">
+                                        <div className="text-sm font-semibold">Tanggal Mulai</div>
+                                        <Input
+                                            type="date"
+                                            required={form.data.booking_notice_enabled}
+                                            value={form.data.booking_notice_start_date}
+                                            onChange={(e) => form.setData('booking_notice_start_date', e.target.value)}
+                                        />
+                                        {errors.booking_notice_start_date ? (
+                                            <div className="text-xs text-red-600">{errors.booking_notice_start_date}</div>
+                                        ) : null}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <div className="text-sm font-semibold">Tanggal Berakhir</div>
+                                        <Input
+                                            type="date"
+                                            min={form.data.booking_notice_start_date || undefined}
+                                            required={form.data.booking_notice_enabled}
+                                            value={form.data.booking_notice_end_date}
+                                            onChange={(e) => form.setData('booking_notice_end_date', e.target.value)}
+                                        />
+                                        {errors.booking_notice_end_date ? (
+                                            <div className="text-xs text-red-600">{errors.booking_notice_end_date}</div>
+                                        ) : null}
+                                    </div>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <div className="text-sm font-semibold">Foto Informasi (Opsional)</div>
+                                    {noticeImagePreview ? (
+                                        <img
+                                            src={noticeImagePreview}
+                                            alt="Foto informasi booking saat ini"
+                                            className="max-h-72 w-full rounded-md border bg-gray-50 object-contain"
+                                        />
+                                    ) : null}
+                                    <Input
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/webp"
+                                        disabled={noticeImagePreparing}
+                                        onChange={handleNoticeImageChange}
+                                    />
+                                    <div className="text-xs text-gray-600">
+                                        Foto awal maksimal 12 MB dan akan diperkecil otomatis.
+                                    </div>
+                                    {noticeImagePreparing ? (
+                                        <div className="text-xs font-medium text-[#1a2744]">Menyiapkan foto...</div>
+                                    ) : null}
+                                    {noticeImageError ? (
+                                        <div className="text-xs text-red-600">{noticeImageError}</div>
+                                    ) : null}
+                                    {errors.booking_notice_image ? (
+                                        <div className="text-xs text-red-600">{errors.booking_notice_image}</div>
+                                    ) : null}
+                                </div>
+                            </div>
+
                             <div className="space-y-3">
                                 <div className="text-sm font-semibold">Foto Konfirmasi Etika Berziarah</div>
                                 {ethicsImagePreview ? (
@@ -254,7 +406,10 @@ export default function AdminSettings() {
                             </div>
 
                             <div className="flex items-center gap-3">
-                                <Button type="submit" disabled={form.processing || imagePreparing}>
+                                <Button
+                                    type="submit"
+                                    disabled={form.processing || imagePreparing || noticeImagePreparing}
+                                >
                                     {form.processing ? 'Menyimpan…' : 'Simpan'}
                                 </Button>
                             </div>

@@ -34,7 +34,17 @@ class AdminPageController extends Controller
 
     public function settings(): Response
     {
-        $keys = ['discord_webhook_url', 'discord_notification_time', 'ethics_image_path'];
+        $keys = [
+            'discord_webhook_url',
+            'discord_notification_time',
+            'ethics_image_path',
+            'booking_notice_enabled',
+            'booking_notice_title',
+            'booking_notice_body',
+            'booking_notice_start_date',
+            'booking_notice_end_date',
+            'booking_notice_image_path',
+        ];
         $rows = DB::table('settings')->whereIn('key', $keys)->get(['key', 'value']);
         $map = $rows->mapWithKeys(fn ($r) => [(string) $r->key => (string) $r->value])->all();
 
@@ -44,6 +54,14 @@ class AdminPageController extends Controller
                 'discord_notification_time' => $map['discord_notification_time'] ?? '08:00',
                 'ethics_image_url' => ! empty($map['ethics_image_path']) && Storage::disk('public')->exists($map['ethics_image_path'])
                     ? Storage::disk('public')->url($map['ethics_image_path'])
+                    : null,
+                'booking_notice_enabled' => ($map['booking_notice_enabled'] ?? '0') === '1',
+                'booking_notice_title' => $map['booking_notice_title'] ?? '',
+                'booking_notice_body' => $map['booking_notice_body'] ?? '',
+                'booking_notice_start_date' => $map['booking_notice_start_date'] ?? '',
+                'booking_notice_end_date' => $map['booking_notice_end_date'] ?? '',
+                'booking_notice_image_url' => ! empty($map['booking_notice_image_path']) && Storage::disk('public')->exists($map['booking_notice_image_path'])
+                    ? Storage::disk('public')->url($map['booking_notice_image_path'])
                     : null,
             ],
             'csrf_token' => csrf_token(),
@@ -56,6 +74,12 @@ class AdminPageController extends Controller
             'discord_webhook_url' => ['nullable', 'string', 'max:2000', 'url'],
             'discord_notification_time' => ['required', 'string', 'regex:/^([01]\\d|2[0-3]):[0-5]\\d$/'],
             'ethics_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'booking_notice_enabled' => ['sometimes', 'boolean'],
+            'booking_notice_title' => ['nullable', 'required_if:booking_notice_enabled,1', 'string', 'max:255'],
+            'booking_notice_body' => ['nullable', 'required_if:booking_notice_enabled,1', 'string', 'max:2000'],
+            'booking_notice_start_date' => ['nullable', 'required_if:booking_notice_enabled,1', 'date_format:Y-m-d'],
+            'booking_notice_end_date' => ['nullable', 'required_if:booking_notice_enabled,1', 'date_format:Y-m-d', 'after_or_equal:booking_notice_start_date'],
+            'booking_notice_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ], [
             'discord_notification_time.required' => 'Jam kirim wajib diisi.',
             'discord_notification_time.regex' => 'Format jam harus HH:MM (00-23).',
@@ -63,6 +87,14 @@ class AdminPageController extends Controller
             'ethics_image.image' => 'File etika berziarah harus berupa gambar.',
             'ethics_image.mimes' => 'Gambar harus berformat JPG, PNG, atau WebP.',
             'ethics_image.max' => 'Ukuran gambar setelah diperkecil maksimal 2 MB.',
+            'booking_notice_title.required_if' => 'Judul informasi wajib diisi saat informasi aktif.',
+            'booking_notice_body.required_if' => 'Isi informasi wajib diisi saat informasi aktif.',
+            'booking_notice_start_date.required_if' => 'Tanggal mulai wajib diisi saat informasi aktif.',
+            'booking_notice_end_date.required_if' => 'Tanggal berakhir wajib diisi saat informasi aktif.',
+            'booking_notice_end_date.after_or_equal' => 'Tanggal berakhir tidak boleh sebelum tanggal mulai.',
+            'booking_notice_image.image' => 'File informasi harus berupa gambar.',
+            'booking_notice_image.mimes' => 'Gambar informasi harus berformat JPG, PNG, atau WebP.',
+            'booking_notice_image.max' => 'Ukuran gambar informasi setelah diperkecil maksimal 2 MB.',
         ]);
 
         // Allow webhook empty string (treated as disabled)
@@ -78,6 +110,26 @@ class AdminPageController extends Controller
                 'key' => 'discord_notification_time',
                 'value' => $time,
             ],
+            [
+                'key' => 'booking_notice_enabled',
+                'value' => $request->boolean('booking_notice_enabled') ? '1' : '0',
+            ],
+            [
+                'key' => 'booking_notice_title',
+                'value' => trim((string) ($validated['booking_notice_title'] ?? '')),
+            ],
+            [
+                'key' => 'booking_notice_body',
+                'value' => trim((string) ($validated['booking_notice_body'] ?? '')),
+            ],
+            [
+                'key' => 'booking_notice_start_date',
+                'value' => (string) ($validated['booking_notice_start_date'] ?? ''),
+            ],
+            [
+                'key' => 'booking_notice_end_date',
+                'value' => (string) ($validated['booking_notice_end_date'] ?? ''),
+            ],
         ], ['key'], ['value']);
 
         if ($request->hasFile('ethics_image')) {
@@ -92,6 +144,26 @@ class AdminPageController extends Controller
 
             DB::table('settings')->upsert([[
                 'key' => 'ethics_image_path',
+                'value' => $newPath,
+            ]], ['key'], ['value']);
+
+            if ($oldPath !== '' && $oldPath !== $newPath) {
+                Storage::disk('public')->delete($oldPath);
+            }
+        }
+
+        if ($request->hasFile('booking_notice_image')) {
+            $oldPath = trim((string) DB::table('settings')->where('key', 'booking_notice_image_path')->value('value'));
+            $newPath = $request->file('booking_notice_image')->store('booking-notices', 'public');
+
+            if (! $newPath) {
+                return redirect()->back()->withErrors([
+                    'booking_notice_image' => 'Gambar informasi gagal disimpan. Silakan coba lagi.',
+                ]);
+            }
+
+            DB::table('settings')->upsert([[
+                'key' => 'booking_notice_image_path',
                 'value' => $newPath,
             ]], ['key'], ['value']);
 
