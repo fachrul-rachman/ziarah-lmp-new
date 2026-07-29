@@ -1,8 +1,11 @@
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_SOURCE_BYTES = 12 * 1024 * 1024;
-const TARGET_UPLOAD_BYTES = 850 * 1024;
+const DEFAULT_TARGET_UPLOAD_BYTES = 850 * 1024;
 
-export async function prepareImageUpload(file: File): Promise<File> {
+export async function prepareImageUpload(
+    file: File,
+    targetUploadBytes = DEFAULT_TARGET_UPLOAD_BYTES,
+): Promise<File> {
     if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
         throw new Error('Gunakan foto berformat JPG, PNG, atau WebP.');
     }
@@ -11,12 +14,12 @@ export async function prepareImageUpload(file: File): Promise<File> {
         throw new Error('Ukuran foto awal maksimal 12 MB.');
     }
 
-    if (file.size <= TARGET_UPLOAD_BYTES) {
+    if (file.size <= targetUploadBytes) {
         return file;
     }
 
     if (!('createImageBitmap' in window)) {
-        throw new Error('Browser ini belum mendukung pengecilan foto. Gunakan foto di bawah 850 KB.');
+        throw new Error('Browser ini belum mendukung pengecilan foto. Gunakan foto yang lebih kecil.');
     }
 
     const bitmap = await createImageBitmap(file);
@@ -41,7 +44,7 @@ export async function prepareImageUpload(file: File): Promise<File> {
             context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
             latestBlob = await canvasToBlob(canvas, quality);
 
-            if (latestBlob.size <= TARGET_UPLOAD_BYTES) {
+            if (latestBlob.size <= targetUploadBytes) {
                 return asWebpFile(file, latestBlob);
             }
 
@@ -56,7 +59,7 @@ export async function prepareImageUpload(file: File): Promise<File> {
         bitmap.close();
     }
 
-    if (latestBlob && latestBlob.size <= 2 * 1024 * 1024) {
+    if (latestBlob && latestBlob.size <= targetUploadBytes) {
         return asWebpFile(file, latestBlob);
     }
 

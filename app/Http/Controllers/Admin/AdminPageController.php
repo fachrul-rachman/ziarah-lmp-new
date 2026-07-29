@@ -79,7 +79,7 @@ class AdminPageController extends Controller
             'booking_notice_body' => ['nullable', 'required_if:booking_notice_enabled,1', 'string', 'max:2000'],
             'booking_notice_start_date' => ['nullable', 'required_if:booking_notice_enabled,1', 'date_format:Y-m-d'],
             'booking_notice_end_date' => ['nullable', 'required_if:booking_notice_enabled,1', 'date_format:Y-m-d', 'after_or_equal:booking_notice_start_date'],
-            'booking_notice_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'booking_notice_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
         ], [
             'discord_notification_time.required' => 'Jam kirim wajib diisi.',
             'discord_notification_time.regex' => 'Format jam harus HH:MM (00-23).',
@@ -94,7 +94,7 @@ class AdminPageController extends Controller
             'booking_notice_end_date.after_or_equal' => 'Tanggal berakhir tidak boleh sebelum tanggal mulai.',
             'booking_notice_image.image' => 'File informasi harus berupa gambar.',
             'booking_notice_image.mimes' => 'Gambar informasi harus berformat JPG, PNG, atau WebP.',
-            'booking_notice_image.max' => 'Ukuran gambar informasi setelah diperkecil maksimal 2 MB.',
+            'booking_notice_image.max' => 'Ukuran gambar informasi setelah diperkecil maksimal 3 MB.',
         ]);
 
         // Allow webhook empty string (treated as disabled)

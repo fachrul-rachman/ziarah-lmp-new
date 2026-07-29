@@ -92,7 +92,7 @@ export default function AdminSettings() {
         setNoticeImagePreparing(true);
 
         try {
-            form.setData('booking_notice_image', await prepareImageUpload(file));
+            form.setData('booking_notice_image', await prepareImageUpload(file, 3 * 1024 * 1024));
         } catch (error) {
             form.setData('booking_notice_image', null);
             event.target.value = '';
@@ -360,7 +360,7 @@ export default function AdminSettings() {
                                         onChange={handleNoticeImageChange}
                                     />
                                     <div className="text-xs text-gray-600">
-                                        Foto awal maksimal 12 MB dan akan diperkecil otomatis.
+                                        PNG, JPG, atau WebP sampai 3 MB tetap memakai format asli. Foto yang lebih besar akan diperkecil otomatis.
                                     </div>
                                     {noticeImagePreparing ? (
                                         <div className="text-xs font-medium text-[#1a2744]">Menyiapkan foto...</div>

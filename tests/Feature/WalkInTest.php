@@ -186,12 +186,12 @@ test('admin can save the booking notice and its image', function () {
         'booking_notice_body' => 'Gunakan pintu masuk sementara.',
         'booking_notice_start_date' => '2026-07-29',
         'booking_notice_end_date' => '2026-08-05',
-        'booking_notice_image' => UploadedFile::fake()->image('jalur.jpg', 1200, 800),
+        'booking_notice_image' => UploadedFile::fake()->image('jalur.png', 1200, 800)->size(3000),
     ])->assertSessionHasNoErrors();
 
     expect(DB::table('settings')->where('key', 'booking_notice_enabled')->value('value'))->toBe('1')
         ->and(DB::table('settings')->where('key', 'booking_notice_title')->value('value'))->toBe('Perubahan Jalur Tangerang')
-        ->and(DB::table('settings')->where('key', 'booking_notice_image_path')->value('value'))->not->toBeNull();
+        ->and(DB::table('settings')->where('key', 'booking_notice_image_path')->value('value'))->toEndWith('.png');
 });
 
 test('booking notice is shown during its date range and hidden after it expires', function () {
