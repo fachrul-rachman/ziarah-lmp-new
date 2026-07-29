@@ -168,6 +168,58 @@ test('ethics image upload rejects files larger than two megabytes', function () 
     expect(DB::table('settings')->where('key', 'ethics_image_path')->exists())->toBeFalse();
 });
 
+test('admin can save the booking notice and its image', function () {
+    Storage::fake('public');
+
+    $admin = User::query()->create([
+        'name' => 'Admin Notice',
+        'email' => 'admin-notice@example.com',
+        'password' => bcrypt('password'),
+    ]);
+
+    $this->actingAs($admin)->post('/admin/settings', [
+        'discord_webhook_url' => '',
+        'discord_notification_time' => '08:00',
+        'booking_notice_enabled' => true,
+        'booking_notice_title' => 'Perubahan Jalur Tangerang',
+        'booking_notice_body' => 'Gunakan pintu masuk sementara.',
+        'booking_notice_start_date' => '2026-07-29',
+        'booking_notice_end_date' => '2026-08-05',
+        'booking_notice_image' => UploadedFile::fake()->image('jalur.jpg', 1200, 800),
+    ])->assertSessionHasNoErrors();
+
+    expect(DB::table('settings')->where('key', 'booking_notice_enabled')->value('value'))->toBe('1')
+        ->and(DB::table('settings')->where('key', 'booking_notice_title')->value('value'))->toBe('Perubahan Jalur Tangerang')
+        ->and(DB::table('settings')->where('key', 'booking_notice_image_path')->value('value'))->not->toBeNull();
+});
+
+test('expired booking notice is not shown to customers', function () {
+    Schema::create('locations', function (Blueprint $table) {
+        $table->id();
+        $table->string('name');
+        $table->timestamps();
+    });
+    Schema::create('time_slots', function (Blueprint $table) {
+        $table->id();
+        $table->time('start_time');
+        $table->timestamps();
+    });
+
+    DB::table('settings')->insert([
+        ['key' => 'booking_notice_enabled', 'value' => '1'],
+        ['key' => 'booking_notice_title', 'value' => 'Pengumuman Lama'],
+        ['key' => 'booking_notice_body', 'value' => 'Sudah tidak berlaku.'],
+        ['key' => 'booking_notice_start_date', 'value' => '2026-07-01'],
+        ['key' => 'booking_notice_end_date', 'value' => '2026-07-20'],
+    ]);
+
+    $this->get('/')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('booking/index')
+            ->where('booking_notice', null));
+});
+
 test('regular booking also requires ethics consent', function () {
     $this->post('/booking', [])->assertSessionHasErrors('ethics_confirmed');
 });
