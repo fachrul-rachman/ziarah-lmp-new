@@ -645,37 +645,6 @@ export default function BookingIndex() {
 
               {state.step === 1 ? (
                 <div className="space">
-                  {page.props.booking_notice ? (
-                    <section
-                      className="rounded-lg border-2 border-[#c9a84c]/50 bg-[#c9a84c]/10 p-3"
-                      aria-label="Informasi penting"
-                    >
-                      <h3 className="text-sm font-semibold text-[#1a2744]">
-                        {page.props.booking_notice.title}
-                      </h3>
-                      <p className="mt-1 whitespace-pre-line text-sm leading-5 text-[#3d4864]">
-                        {page.props.booking_notice.body}
-                      </p>
-                      {page.props.booking_notice.image_url ? (
-                        <img
-                          src={page.props.booking_notice.image_url}
-                          alt={page.props.booking_notice.title}
-                          className="mt-3 max-h-72 w-full rounded-md border bg-white object-contain"
-                        />
-                      ) : null}
-                      {page.props.booking_notice.download_url ? (
-                        <a
-                          href={page.props.booking_notice.download_url}
-                          download
-                          className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-md bg-[#06038D] px-4 py-2 text-sm font-semibold text-white hover:bg-[#050276]"
-                        >
-                          <IconDownload size={18} aria-hidden="true" />
-                          Unduh Foto
-                        </a>
-                      ) : null}
-                    </section>
-                  ) : null}
-
                   <div>
                     <label className="field-label">Jenis kegiatan</label>
                     <div className="sel-wrap">
@@ -1213,6 +1182,37 @@ export default function BookingIndex() {
               </button>
             ) : null}
           </div>
+
+          {state.step === 1 && page.props.booking_notice ? (
+            <section
+              className="mt-3 rounded-lg border-2 border-[#c9a84c]/50 bg-[#c9a84c]/10 p-3"
+              aria-label="Informasi penting"
+            >
+              <h3 className="text-center text-sm font-semibold text-[#1a2744]">
+                {page.props.booking_notice.title}
+              </h3>
+              <p className="mt-1 whitespace-pre-line text-sm leading-5 text-[#3d4864]">
+                {page.props.booking_notice.body}
+              </p>
+              {page.props.booking_notice.image_url ? (
+                <img
+                  src={page.props.booking_notice.image_url}
+                  alt={page.props.booking_notice.title}
+                  className="mt-3 max-h-72 w-full rounded-md border bg-white object-contain"
+                />
+              ) : null}
+              {page.props.booking_notice.download_url ? (
+                <a
+                  href={page.props.booking_notice.download_url}
+                  download
+                  className="mt-3 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md bg-[#06038D] px-4 py-2 text-sm font-semibold text-white hover:bg-[#050276]"
+                >
+                  <IconDownload size={18} aria-hidden="true" />
+                  Unduh Informasi
+                </a>
+              ) : null}
+            </section>
+          ) : null}
         </div>
       </div>
       <EthicsConfirmationDialog
