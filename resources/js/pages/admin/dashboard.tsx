@@ -34,6 +34,7 @@ type WalkInRow = {
   customer_name: string
   customer_phone: string
   lot_number?: string | null
+  booking_h2_reason?: string | null
   visited_at: string
   ethics_consented_at: string
 }
@@ -373,6 +374,7 @@ export default function AdminDashboard() {
                             <TableHead>Nama</TableHead>
                             <TableHead>Nomor Telepon</TableHead>
                             <TableHead>Nomor Lot</TableHead>
+                            <TableHead>Alasan Tidak Booking H-2</TableHead>
                             <TableHead>Waktu Kedatangan</TableHead>
                             <TableHead>Waktu Persetujuan</TableHead>
                           </TableRow>
@@ -383,6 +385,7 @@ export default function AdminDashboard() {
                               <TableCell className="font-medium">{walkIn.customer_name}</TableCell>
                               <TableCell>{walkIn.customer_phone.startsWith("62") ? `+${walkIn.customer_phone}` : walkIn.customer_phone}</TableCell>
                               <TableCell>{walkIn.lot_number || "-"}</TableCell>
+                              <TableCell>{walkIn.booking_h2_reason || "-"}</TableCell>
                               <TableCell>{walkIn.visited_at}</TableCell>
                               <TableCell>{walkIn.ethics_consented_at}</TableCell>
                             </TableRow>
@@ -396,6 +399,7 @@ export default function AdminDashboard() {
                           <div className="font-semibold">{walkIn.customer_name}</div>
                           <div className="mt-1 text-gray-700">{walkIn.customer_phone.startsWith("62") ? `+${walkIn.customer_phone}` : walkIn.customer_phone}</div>
                           <div className="mt-2 text-gray-700">Nomor lot: {walkIn.lot_number || "-"}</div>
+                          <div className="mt-1 text-gray-700">Alasan: {walkIn.booking_h2_reason || "-"}</div>
                           <div className="mt-2 text-gray-700">Datang: {walkIn.visited_at}</div>
                           <div className="mt-1 text-xs text-gray-600">Persetujuan: {walkIn.ethics_consented_at}</div>
                         </div>

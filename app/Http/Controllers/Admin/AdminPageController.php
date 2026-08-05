@@ -38,6 +38,7 @@ class AdminPageController extends Controller
             'discord_webhook_url',
             'discord_notification_time',
             'ethics_image_path',
+            'ethics_pdf_path',
             'booking_notice_enabled',
             'booking_notice_title',
             'booking_notice_body',
@@ -54,6 +55,9 @@ class AdminPageController extends Controller
                 'discord_notification_time' => $map['discord_notification_time'] ?? '08:00',
                 'ethics_image_url' => ! empty($map['ethics_image_path']) && Storage::disk('public')->exists($map['ethics_image_path'])
                     ? Storage::disk('public')->url($map['ethics_image_path'])
+                    : null,
+                'ethics_pdf_url' => ! empty($map['ethics_pdf_path']) && Storage::disk('public')->exists($map['ethics_pdf_path'])
+                    ? Storage::disk('public')->url($map['ethics_pdf_path'])
                     : null,
                 'booking_notice_enabled' => ($map['booking_notice_enabled'] ?? '0') === '1',
                 'booking_notice_title' => $map['booking_notice_title'] ?? '',
@@ -74,6 +78,7 @@ class AdminPageController extends Controller
             'discord_webhook_url' => ['nullable', 'string', 'max:2000', 'url'],
             'discord_notification_time' => ['required', 'string', 'regex:/^([01]\\d|2[0-3]):[0-5]\\d$/'],
             'ethics_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'ethics_pdf' => ['nullable', 'file', 'mimes:pdf', 'max:4096'],
             'booking_notice_enabled' => ['sometimes', 'boolean'],
             'booking_notice_title' => ['nullable', 'required_if:booking_notice_enabled,1', 'string', 'max:255'],
             'booking_notice_body' => ['nullable', 'required_if:booking_notice_enabled,1', 'string', 'max:2000'],
@@ -87,6 +92,8 @@ class AdminPageController extends Controller
             'ethics_image.image' => 'File etika berziarah harus berupa gambar.',
             'ethics_image.mimes' => 'Gambar harus berformat JPG, PNG, atau WebP.',
             'ethics_image.max' => 'Ukuran gambar setelah diperkecil maksimal 2 MB.',
+            'ethics_pdf.mimes' => 'File Etika Berziarah harus berformat PDF.',
+            'ethics_pdf.max' => 'Ukuran PDF Etika Berziarah maksimal 4 MB.',
             'booking_notice_title.required_if' => 'Judul informasi wajib diisi saat informasi aktif.',
             'booking_notice_body.required_if' => 'Isi informasi wajib diisi saat informasi aktif.',
             'booking_notice_start_date.required_if' => 'Tanggal mulai wajib diisi saat informasi aktif.',
@@ -144,6 +151,26 @@ class AdminPageController extends Controller
 
             DB::table('settings')->upsert([[
                 'key' => 'ethics_image_path',
+                'value' => $newPath,
+            ]], ['key'], ['value']);
+
+            if ($oldPath !== '' && $oldPath !== $newPath) {
+                Storage::disk('public')->delete($oldPath);
+            }
+        }
+
+        if ($request->hasFile('ethics_pdf')) {
+            $oldPath = trim((string) DB::table('settings')->where('key', 'ethics_pdf_path')->value('value'));
+            $newPath = $request->file('ethics_pdf')->store('ethics', 'public');
+
+            if (! $newPath) {
+                return redirect()->back()->withErrors([
+                    'ethics_pdf' => 'PDF Etika Berziarah gagal disimpan. Silakan coba lagi.',
+                ]);
+            }
+
+            DB::table('settings')->upsert([[
+                'key' => 'ethics_pdf_path',
                 'value' => $newPath,
             ]], ['key'], ['value']);
 

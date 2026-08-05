@@ -9,6 +9,7 @@ use App\Support\Normalization;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -20,6 +21,7 @@ class WalkInController extends Controller
     {
         return Inertia::render('walk-in/index', [
             'ethics_image_url' => $this->ethicsConsent->imageUrl(),
+            'ethics_pdf_url' => $this->ethicsConsent->pdfUrl(),
         ]);
     }
 
@@ -29,11 +31,19 @@ class WalkInController extends Controller
             'customer_name' => ['required', 'string', 'max:255'],
             'customer_phone' => ['required', 'string', 'max:32'],
             'lot_number' => ['nullable', 'string', 'max:10'],
+            'booking_h2_reason' => ['required', 'string', Rule::in([
+                'Tidak tahu',
+                'Tahu tapi lupa',
+                'Tidak bisa',
+                'Keperluan mendadak',
+            ])],
             'ethics_confirmed' => ['required', 'accepted'],
         ], [
             'customer_name.required' => 'Nama wajib diisi.',
             'customer_phone.required' => 'Nomor telepon wajib diisi.',
             'lot_number.max' => 'Nomor lot maksimal 10 karakter.',
+            'booking_h2_reason.required' => 'Alasan tidak mengisi link booking wajib dipilih.',
+            'booking_h2_reason.in' => 'Alasan yang dipilih tidak valid.',
             'ethics_confirmed.accepted' => 'Persetujuan etika berziarah wajib dicentang.',
         ]);
 
@@ -52,6 +62,7 @@ class WalkInController extends Controller
             'customer_name' => Normalization::normalizeText((string) $validated['customer_name']),
             'customer_phone' => $phone,
             'lot_number' => $lotNumber !== '' ? $lotNumber : null,
+            'booking_h2_reason' => $validated['booking_h2_reason'],
             'ethics_consented_at' => now(),
         ]);
 

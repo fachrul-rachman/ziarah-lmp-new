@@ -23,6 +23,7 @@
                 <th>Nama</th>
                 <th>Nomor Telepon</th>
                 <th>Nomor Lot</th>
+                <th>Alasan Tidak Booking H-2</th>
                 <th>Waktu Kedatangan</th>
                 <th>Waktu Persetujuan</th>
             </tr>
@@ -34,11 +35,12 @@
                     <td>{{ $row['customer_name'] ?? '' }}</td>
                     <td>{{ $row['customer_phone'] ?? '' }}</td>
                     <td>{{ $row['lot_number'] ?? '-' }}</td>
+                    <td>{{ $row['booking_h2_reason'] ?? '-' }}</td>
                     <td>{{ $row['visited_at'] ?? '' }}</td>
                     <td>{{ $row['ethics_consented_at'] ?? '' }}</td>
                 </tr>
             @empty
-                <tr><td colspan="6" class="center">Tidak ada data.</td></tr>
+                <tr><td colspan="7" class="center">Tidak ada data.</td></tr>
             @endforelse
         </tbody>
     </table>

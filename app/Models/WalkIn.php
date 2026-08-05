@@ -11,6 +11,7 @@ class WalkIn extends Model
         'customer_name',
         'customer_phone',
         'lot_number',
+        'booking_h2_reason',
         'ethics_consented_at',
     ];
 

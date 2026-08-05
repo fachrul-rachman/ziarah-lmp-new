@@ -13,6 +13,7 @@ export default function AdminSettings() {
             discord_webhook_url: string;
             discord_notification_time: string;
             ethics_image_url?: string | null;
+            ethics_pdf_url?: string | null;
             booking_notice_enabled: boolean;
             booking_notice_title: string;
             booking_notice_body: string;
@@ -33,6 +34,7 @@ export default function AdminSettings() {
         discord_webhook_url: string;
         discord_notification_time: string;
         ethics_image: File | null;
+        ethics_pdf: File | null;
         booking_notice_enabled: boolean;
         booking_notice_title: string;
         booking_notice_body: string;
@@ -43,6 +45,7 @@ export default function AdminSettings() {
         discord_webhook_url: values.discord_webhook_url ?? '',
         discord_notification_time: values.discord_notification_time ?? '08:00',
         ethics_image: null,
+        ethics_pdf: null,
         booking_notice_enabled: values.booking_notice_enabled ?? false,
         booking_notice_title: values.booking_notice_title ?? '',
         booking_notice_body: values.booking_notice_body ?? '',
@@ -402,6 +405,31 @@ export default function AdminSettings() {
                                 {imageError ? <div className="text-xs text-red-600">{imageError}</div> : null}
                                 {errors.ethics_image ? (
                                     <div className="text-xs text-red-600">{errors.ethics_image}</div>
+                                ) : null}
+                            </div>
+
+                            <div className="space-y-3">
+                                <div className="text-sm font-semibold">PDF Etika Berziarah</div>
+                                {values.ethics_pdf_url ? (
+                                    <a
+                                        href={values.ethics_pdf_url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="block text-sm font-medium text-blue-700 underline"
+                                    >
+                                        Lihat PDF saat ini
+                                    </a>
+                                ) : (
+                                    <div className="text-sm text-gray-600">Belum ada PDF yang dipasang.</div>
+                                )}
+                                <Input
+                                    type="file"
+                                    accept="application/pdf"
+                                    onChange={(event) => form.setData('ethics_pdf', event.target.files?.[0] ?? null)}
+                                />
+                                <div className="text-xs text-gray-600">Format PDF, maksimal 4 MB.</div>
+                                {errors.ethics_pdf ? (
+                                    <div className="text-xs text-red-600">{errors.ethics_pdf}</div>
                                 ) : null}
                             </div>
 

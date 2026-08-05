@@ -134,6 +134,7 @@ export default function BookingIndex() {
     timeSlots: TimeSlot[]
     errors: Record<string, string>
     ethics_image_url?: string | null
+    ethics_pdf_url?: string | null
     booking_notice?: BookingNotice | null
   }>()
 
@@ -1218,6 +1219,7 @@ export default function BookingIndex() {
       <EthicsConfirmationDialog
         open={confirmationOpen}
         imageUrl={page.props.ethics_image_url}
+        pdfUrl={page.props.ethics_pdf_url}
         processing={postForm.processing}
         onConfirm={submitBooking}
       />

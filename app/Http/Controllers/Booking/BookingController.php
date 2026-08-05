@@ -75,6 +75,7 @@ class BookingController extends Controller
             'locations' => $locations,
             'timeSlots' => $timeSlots,
             'ethics_image_url' => $this->ethicsConsent->imageUrl(),
+            'ethics_pdf_url' => $this->ethicsConsent->pdfUrl(),
             'booking_notice' => $notice,
         ]);
     }

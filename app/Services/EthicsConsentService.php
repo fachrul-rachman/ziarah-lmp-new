@@ -9,7 +9,17 @@ class EthicsConsentService
 {
     public function imageUrl(): ?string
     {
-        $path = trim((string) DB::table('settings')->where('key', 'ethics_image_path')->value('value'));
+        return $this->urlFor('ethics_image_path');
+    }
+
+    public function pdfUrl(): ?string
+    {
+        return $this->urlFor('ethics_pdf_path');
+    }
+
+    private function urlFor(string $key): ?string
+    {
+        $path = trim((string) DB::table('settings')->where('key', $key)->value('value'));
 
         if ($path === '' || ! Storage::disk('public')->exists($path)) {
             return null;

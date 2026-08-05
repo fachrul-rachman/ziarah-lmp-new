@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { IconDownload } from '@tabler/icons-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -13,6 +14,7 @@ import {
 type EthicsConfirmationDialogProps = {
     open: boolean;
     imageUrl?: string | null;
+    pdfUrl?: string | null;
     processing?: boolean;
     onConfirm: () => void;
 };
@@ -20,6 +22,7 @@ type EthicsConfirmationDialogProps = {
 export function EthicsConfirmationDialog({
     open,
     imageUrl,
+    pdfUrl,
     processing = false,
     onConfirm,
 }: EthicsConfirmationDialogProps) {
@@ -73,7 +76,19 @@ export function EthicsConfirmationDialog({
                     </strong>
                 </label>
 
-                <DialogFooter>
+                <DialogFooter className={confirmed && pdfUrl ? 'sm:justify-between' : undefined}>
+                    {confirmed && pdfUrl ? (
+                        <Button
+                            asChild
+                            variant="outline"
+                            className="min-h-12 w-full border-[#1a2744] text-base text-[#1a2744] sm:w-auto"
+                        >
+                            <a href={pdfUrl} download>
+                                <IconDownload aria-hidden="true" />
+                                Download Etika Berziarah
+                            </a>
+                        </Button>
+                    ) : null}
                     <Button
                         type="button"
                         className="min-h-12 w-full bg-[#1a2744] text-base hover:bg-[#243359] sm:w-auto"

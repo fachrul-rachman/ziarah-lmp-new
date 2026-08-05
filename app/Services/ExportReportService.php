@@ -250,6 +250,7 @@ class ExportReportService
             'customer_name' => $walkIn->customer_name,
             'customer_phone' => $walkIn->customer_phone,
             'lot_number' => $walkIn->lot_number,
+            'booking_h2_reason' => $walkIn->booking_h2_reason,
             'visited_at' => $walkIn->created_at?->timezone('Asia/Jakarta')->translatedFormat('d F Y, H:i'),
             'ethics_consented_at' => $walkIn->ethics_consented_at?->timezone('Asia/Jakarta')->translatedFormat('d F Y, H:i'),
         ])->all();

@@ -23,9 +23,9 @@ class AdminWalkInExport implements FromArray, WithEvents
     public function array(): array
     {
         $output = [
-            ['DATA WALK-IN', '', '', '', '', ''],
-            ['PERIODE: '.$this->formatRange(), '', '', '', '', ''],
-            ['Nomor', 'Nama', 'Nomor Telepon', 'Nomor Lot', 'Waktu Kedatangan', 'Waktu Persetujuan'],
+            ['DATA WALK-IN', '', '', '', '', '', ''],
+            ['PERIODE: '.$this->formatRange(), '', '', '', '', '', ''],
+            ['Nomor', 'Nama', 'Nomor Telepon', 'Nomor Lot', 'Alasan Tidak Booking H-2', 'Waktu Kedatangan', 'Waktu Persetujuan'],
         ];
 
         foreach ($this->rows as $index => $row) {
@@ -34,6 +34,7 @@ class AdminWalkInExport implements FromArray, WithEvents
                 (string) ($row['customer_name'] ?? ''),
                 (string) ($row['customer_phone'] ?? ''),
                 (string) ($row['lot_number'] ?? ''),
+                (string) ($row['booking_h2_reason'] ?? ''),
                 (string) ($row['visited_at'] ?? ''),
                 (string) ($row['ethics_consented_at'] ?? ''),
             ];
@@ -49,15 +50,15 @@ class AdminWalkInExport implements FromArray, WithEvents
                 $sheet = $event->sheet->getDelegate();
                 $highestRow = max(3, $sheet->getHighestDataRow());
 
-                $sheet->mergeCells('A1:F1');
-                $sheet->mergeCells('A2:F2');
+                $sheet->mergeCells('A1:G1');
+                $sheet->mergeCells('A2:G2');
                 $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
                 $sheet->getStyle('A2')->getFont()->setBold(true);
-                $sheet->getStyle('A3:F3')->getFont()->setBold(true);
-                $sheet->getStyle('A3:F3')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF7F8FA');
-                $sheet->getStyle("A1:F{$highestRow}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+                $sheet->getStyle('A3:G3')->getFont()->setBold(true);
+                $sheet->getStyle('A3:G3')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF7F8FA');
+                $sheet->getStyle("A1:G{$highestRow}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
 
-                foreach (['A' => 8, 'B' => 24, 'C' => 20, 'D' => 14, 'E' => 24, 'F' => 24] as $column => $width) {
+                foreach (['A' => 8, 'B' => 24, 'C' => 20, 'D' => 14, 'E' => 28, 'F' => 24, 'G' => 24] as $column => $width) {
                     $sheet->getColumnDimension($column)->setWidth($width);
                 }
             },

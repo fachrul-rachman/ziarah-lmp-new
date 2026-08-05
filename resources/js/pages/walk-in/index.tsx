@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 export default function WalkInIndex() {
     const page = usePage<{
         ethics_image_url?: string | null;
+        ethics_pdf_url?: string | null;
         errors: Record<string, string>;
     }>();
     const [confirmationOpen, setConfirmationOpen] = React.useState(false);
@@ -15,6 +16,7 @@ export default function WalkInIndex() {
         customer_name: '',
         customer_phone: '',
         lot_number: '',
+        booking_h2_reason: '',
         ethics_confirmed: false,
     });
 
@@ -154,6 +156,34 @@ export default function WalkInIndex() {
                             ) : null}
                         </div>
 
+                        <div className="space-y-2">
+                            <label
+                                htmlFor="booking_h2_reason"
+                                className="block text-lg font-semibold text-gray-900"
+                            >
+                                Alasan tidak mengisi Link Booking Ziarah H-2
+                            </label>
+                            <select
+                                id="booking_h2_reason"
+                                className="h-12 w-full rounded-md border-2 border-[#1a2744]/15 bg-[#f7f8fa] px-3 text-base focus:border-[#1a2744] focus:outline-none focus:ring-2 focus:ring-[#1a2744]/10"
+                                required
+                                value={form.data.booking_h2_reason}
+                                onChange={(event) => form.setData('booking_h2_reason', event.target.value)}
+                            >
+                                <option value="">Pilih alasan</option>
+                                <option value="Tidak tahu">Tidak tahu</option>
+                                <option value="Tahu tapi lupa">Tahu tapi lupa</option>
+                                <option value="Tidak bisa">Tidak bisa</option>
+                                <option value="Keperluan mendadak">Keperluan mendadak</option>
+                            </select>
+                            {errors.booking_h2_reason ? (
+                                <p className="text-sm text-red-700">{errors.booking_h2_reason}</p>
+                            ) : null}
+                            <p className="text-sm font-medium text-red-700">
+                                Untuk kenyamanan Anda berziarah, mohon mengisi Link Ziarah 2 hari sebelum kedatangan
+                            </p>
+                        </div>
+
                         <Button
                             type="submit"
                             className="min-h-12 w-full bg-[#1a2744] text-base hover:bg-[#243359]"
@@ -167,6 +197,7 @@ export default function WalkInIndex() {
             <EthicsConfirmationDialog
                 open={confirmationOpen}
                 imageUrl={page.props.ethics_image_url}
+                pdfUrl={page.props.ethics_pdf_url}
                 processing={form.processing}
                 onConfirm={submitWalkIn}
             />

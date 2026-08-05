@@ -21,6 +21,7 @@ beforeEach(function () {
         $table->string('customer_name');
         $table->string('customer_phone', 15);
         $table->string('lot_number', 10)->nullable();
+        $table->string('booking_h2_reason', 50)->nullable();
         $table->timestamp('ethics_consented_at');
         $table->timestamps();
     });
@@ -46,7 +47,8 @@ test('walk-in page is publicly accessible without a navigation link', function (
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('walk-in/index')
-            ->has('ethics_image_url'));
+            ->has('ethics_image_url')
+            ->has('ethics_pdf_url'));
 });
 
 test('walk-in requires ethics consent before data is stored', function () {
@@ -65,6 +67,7 @@ test('walk-in stores normalized data and redirects to a simple success page', fu
         'customer_name' => '  Budi Santoso  ',
         'customer_phone' => '0812-3456-7890',
         'lot_number' => ' A-12 ',
+        'booking_h2_reason' => 'Keperluan mendadak',
         'ethics_confirmed' => true,
     ]);
 
@@ -74,6 +77,7 @@ test('walk-in stores normalized data and redirects to a simple success page', fu
     expect($walkIn->customer_name)->toBe('Budi Santoso')
         ->and($walkIn->customer_phone)->toBe('6281234567890')
         ->and($walkIn->lot_number)->toBe('A-12')
+        ->and($walkIn->booking_h2_reason)->toBe('Keperluan mendadak')
         ->and($walkIn->ethics_consented_at)->not->toBeNull();
 
     $this->get(route('walk-in.success', $walkIn->public_token))
@@ -87,6 +91,7 @@ test('walk-in rejects phone numbers with invalid length or prefix', function (st
     $this->post('/walk-in', [
         'customer_name' => 'Budi Santoso',
         'customer_phone' => $phone,
+        'booking_h2_reason' => 'Tidak tahu',
         'ethics_confirmed' => true,
     ])->assertSessionHasErrors('customer_phone');
 
@@ -103,6 +108,7 @@ test('walk-in accepts phone numbers at the minimum and maximum length', function
     $this->post('/walk-in', [
         'customer_name' => 'Budi Santoso',
         'customer_phone' => $phone,
+        'booking_h2_reason' => 'Tidak tahu',
         'ethics_confirmed' => true,
     ])->assertSessionHasNoErrors();
 
@@ -120,6 +126,20 @@ test('walk-in lot number is optional and limited to ten characters', function ()
         'ethics_confirmed' => true,
     ])->assertSessionHasErrors('lot_number');
 });
+
+test('walk-in requires a valid reason for not using regular booking', function (?string $reason) {
+    $this->post('/walk-in', [
+        'customer_name' => 'Budi Santoso',
+        'customer_phone' => '081234567890',
+        'booking_h2_reason' => $reason,
+        'ethics_confirmed' => true,
+    ])->assertSessionHasErrors('booking_h2_reason');
+
+    $this->assertDatabaseCount('walk_ins', 0);
+})->with([
+    'empty' => '',
+    'unknown option' => 'Alasan lain',
+]);
 
 test('only an authenticated admin can replace the ethics image', function () {
     Storage::fake('public');
@@ -167,6 +187,26 @@ test('ethics image upload rejects files larger than two megabytes', function () 
     ])->assertSessionHasErrors('ethics_image');
 
     expect(DB::table('settings')->where('key', 'ethics_image_path')->exists())->toBeFalse();
+});
+
+test('admin can upload an ethics pdf up to four megabytes', function () {
+    Storage::fake('public');
+
+    $admin = User::query()->create([
+        'name' => 'Admin PDF',
+        'email' => 'admin-pdf@example.com',
+        'password' => bcrypt('password'),
+    ]);
+
+    $this->actingAs($admin)->post('/admin/settings', [
+        'discord_webhook_url' => '',
+        'discord_notification_time' => '08:00',
+        'ethics_pdf' => UploadedFile::fake()->create('etika.pdf', 4000, 'application/pdf'),
+    ])->assertSessionHasNoErrors();
+
+    $path = DB::table('settings')->where('key', 'ethics_pdf_path')->value('value');
+    expect($path)->toEndWith('.pdf');
+    Storage::disk('public')->assertExists($path);
 });
 
 test('admin can save the booking notice and its image', function () {
@@ -251,6 +291,7 @@ test('admin can view walk-in data separately from bookings', function () {
         'customer_name' => 'Budi Santoso',
         'customer_phone' => '6281234567890',
         'lot_number' => 'A-12',
+        'booking_h2_reason' => 'Tahu tapi lupa',
         'ethics_consented_at' => now(),
     ]);
 
@@ -260,5 +301,6 @@ test('admin can view walk-in data separately from bookings', function () {
             ->component('admin/dashboard')
             ->where('recordType', 'walk_in')
             ->where('walkIns.0.customer_name', 'Budi Santoso')
+            ->where('walkIns.0.booking_h2_reason', 'Tahu tapi lupa')
             ->has('bookings', 0));
 });
