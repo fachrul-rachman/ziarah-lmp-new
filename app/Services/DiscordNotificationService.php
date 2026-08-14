@@ -12,6 +12,8 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class DiscordNotificationService
 {
+    public function __construct(private readonly Client $client) {}
+
     /**
      * @return array{status:string,message:?string,attachments:array<int,array<string,string>>}
      */
@@ -22,21 +24,105 @@ class DiscordNotificationService
             return ['status' => 'skipped', 'message' => 'Webhook URL kosong.', 'attachments' => []];
         }
 
-        $bookings = Booking::query()
+        $currentBookings = Booking::query()
             ->with(['location:id,name', 'zone:id,name', 'lot:id,lot_number,size,grave_type', 'timeSlot:id,start_time', 'facilities'])
             ->whereDate('visit_date', $targetDate)
             ->whereIn('status', ['confirmed', 'rescheduled'])
             ->orderBy('zone_id')
             ->get();
 
-        if ($bookings->count() === 0) {
+        $history = DB::table('notification_log_bookings as batch_bookings')
+            ->join('notification_logs as logs', 'logs.id', '=', 'batch_bookings.notification_log_id')
+            ->where('logs.target_date', $targetDate)
+            ->whereIn('logs.status', ['processing', 'sent', 'skipped'])
+            ->orderBy('logs.sent_at')
+            ->orderBy('logs.id')
+            ->get(['batch_bookings.booking_id', 'batch_bookings.snapshot_hash']);
+
+        $previous = [];
+        foreach ($history as $item) {
+            $previous[(int) $item->booking_id] = $item;
+        }
+
+        $legacyCutoff = DB::table('notification_logs as logs')
+            ->where('logs.target_date', $targetDate)
+            ->where('logs.status', 'sent')
+            ->whereNotExists(fn ($query) => $query
+                ->selectRaw('1')
+                ->from('notification_log_bookings as batch_bookings')
+                ->whereColumn('batch_bookings.notification_log_id', 'logs.id'))
+            ->max('logs.sent_at');
+        $legacyCutoffAt = $legacyCutoff ? CarbonImmutable::parse((string) $legacyCutoff, 'Asia/Jakarta') : null;
+
+        $bookingsById = $currentBookings->keyBy('id');
+        $missingIds = array_values(array_diff(array_keys($previous), $bookingsById->keys()->all()));
+        if ($missingIds !== []) {
+            $historicalBookings = Booking::query()
+                ->with(['location:id,name', 'zone:id,name', 'lot:id,lot_number,size,grave_type', 'timeSlot:id,start_time', 'facilities'])
+                ->whereIn('id', $missingIds)
+                ->get();
+            $bookingsById = $bookingsById->union($historicalBookings->keyBy('id'));
+        }
+
+        $newRows = [];
+        $changedRows = [];
+        $trackedRows = [];
+
+        foreach ($currentBookings as $booking) {
+            $row = $this->toRow($booking);
+            $snapshotHash = $this->snapshotHash($row);
+            $prior = $previous[$booking->id] ?? null;
+
+            if ($prior && hash_equals((string) $prior->snapshot_hash, $snapshotHash)) {
+                continue;
+            }
+
+            if (! $prior && $legacyCutoffAt && $booking->created_at <= $legacyCutoffAt && $booking->updated_at <= $legacyCutoffAt) {
+                continue;
+            }
+
+            $kind = $prior || ($legacyCutoffAt && $booking->created_at <= $legacyCutoffAt) ? 'changed' : 'new';
+            if ($kind === 'new') {
+                $newRows[] = $row;
+            } else {
+                $row['additional_note'] = 'PERUBAHAN: Data booking diperbarui. '.($row['additional_note'] ?? '');
+                $changedRows[] = $row;
+            }
+
+            $trackedRows[] = $this->trackingRow($notificationLogId, $booking->id, $kind, $snapshotHash);
+        }
+
+        foreach ($previous as $bookingId => $prior) {
+            if ($currentBookings->contains('id', $bookingId)) {
+                continue;
+            }
+
+            $booking = $bookingsById->get($bookingId);
+            if (! $booking) {
+                continue;
+            }
+
+            $row = $this->toRow($booking);
+            $snapshotHash = $this->snapshotHash($row);
+            if (hash_equals((string) $prior->snapshot_hash, $snapshotHash)) {
+                continue;
+            }
+
+            $change = $this->changeDescription($booking, $targetDate);
+            $row['additional_note'] = "PERUBAHAN: {$change} ".($row['additional_note'] ?? '');
+            $changedRows[] = $row;
+            $trackedRows[] = $this->trackingRow($notificationLogId, $booking->id, 'changed', $snapshotHash);
+        }
+
+        if ($newRows === [] && $changedRows === []) {
             return ['status' => 'skipped', 'message' => null, 'attachments' => []];
         }
 
-        $rows = $bookings->map(fn (Booking $b) => $this->toRow($b))->all();
+        $batchTime = (string) (DB::table('notification_logs')->where('id', $notificationLogId)->value('scheduled_time') ?? 'manual');
+        $batchFileText = str_replace(':', '-', $batchTime);
 
-        $ziarahRows = array_values(array_filter($rows, fn (array $r) => ($r['activity_type'] ?? '') === 'ziarah'));
-        $kegiatanRows = array_values(array_filter($rows, fn (array $r) => ($r['activity_type'] ?? '') !== 'ziarah'));
+        $ziarahRows = array_values(array_filter($newRows, fn (array $r) => ($r['activity_type'] ?? '') === 'ziarah'));
+        $kegiatanRows = array_values(array_filter($newRows, fn (array $r) => ($r['activity_type'] ?? '') !== 'ziarah'));
 
         Storage::makeDirectory('discord');
 
@@ -47,18 +133,32 @@ class DiscordNotificationService
         $dateFileText = $this->formatIdDateForFilename($targetDate);
 
         if (count($ziarahRows) > 0) {
-            $attachments = array_merge($attachments, $this->generateExcelPerLocation('ziarah', $ziarahRows, $targetDate, $dateFileText));
+            $attachments = array_merge($attachments, $this->generateExcelPerLocation('ziarah', $ziarahRows, $targetDate, $dateFileText, $batchFileText));
             $summaryParts[] = $this->summaryBlock('A. Laporan Booking Ziarah', $dateText, $ziarahRows);
         }
 
         if (count($kegiatanRows) > 0) {
-            $attachments = array_merge($attachments, $this->generateExcelPerLocation('kegiatan', $kegiatanRows, $targetDate, $dateFileText));
+            $attachments = array_merge($attachments, $this->generateExcelPerLocation('kegiatan', $kegiatanRows, $targetDate, $dateFileText, $batchFileText));
             $summaryParts[] = $this->summaryBlock('B. Laporan Booking Kegiatan(TOMB)', $dateText, $kegiatanRows);
         }
 
-        $content = implode("\n\n---\n\n", array_filter($summaryParts));
+        if ($changedRows !== []) {
+            $attachments = array_merge($attachments, $this->generateExcelPerLocation('perubahan', $changedRows, $targetDate, $dateFileText, $batchFileText));
+            $summaryParts[] = implode("\n", [
+                '**C. Perubahan/Pembatalan dari Batch Sebelumnya**',
+                "Tanggal: {$dateText}",
+                'Total Perubahan: '.count($changedRows),
+                'Rincian tersedia pada file perubahan.',
+            ]);
+        }
+
+        $content = "**Batch Laporan {$batchTime} WIB**\n\n".implode("\n\n---\n\n", array_filter($summaryParts));
 
         $this->postMultipart($webhook, $content, $attachments);
+
+        if ($trackedRows !== []) {
+            DB::table('notification_log_bookings')->insert($trackedRows);
+        }
 
         return [
             'status' => 'sent',
@@ -71,7 +171,7 @@ class DiscordNotificationService
      * @param  array<int,array<string,mixed>>  $rows
      * @return array<int,array<string,string>>
      */
-    private function generateExcelPerLocation(string $category, array $rows, string $targetDate, string $dateFileText): array
+    private function generateExcelPerLocation(string $category, array $rows, string $targetDate, string $dateFileText, string $batchFileText): array
     {
         $byLocation = [];
         foreach ($rows as $r) {
@@ -95,7 +195,7 @@ class DiscordNotificationService
             });
 
             $safeLocation = $this->sanitizeFilenamePart($locationName === '' ? 'Lokasi' : $locationName);
-            $fileName = "{$category}-{$safeLocation}-{$dateFileText}.xlsx";
+            $fileName = "{$category}-{$safeLocation}-{$dateFileText}-batch-{$batchFileText}.xlsx";
             $excelPath = 'discord/'.$fileName;
 
             Excel::store(new AdminBookingExport($locRows, $targetDate, $targetDate, $category === 'ziarah'), $excelPath);
@@ -110,8 +210,6 @@ class DiscordNotificationService
      */
     private function postMultipart(string $webhookUrl, string $content, array $attachments): void
     {
-        $client = new Client(['timeout' => 30]);
-
         $multipart = [
             [
                 'name' => 'payload_json',
@@ -131,7 +229,7 @@ class DiscordNotificationService
             ];
         }
 
-        $client->post($webhookUrl, ['multipart' => $multipart]);
+        $this->client->post($webhookUrl, ['multipart' => $multipart, 'timeout' => 30]);
     }
 
     /**
@@ -191,6 +289,7 @@ class DiscordNotificationService
 
         return [
             'booking_id' => $b->id,
+            'booking_code' => (string) ($b->booking_code ?? ''),
             'activity_type' => (string) ($b->activity_type ?? ''),
             'activity_label' => $activityLabel,
             // Keep key consistent with AdminBookingExport / ExportReportService.
@@ -213,6 +312,44 @@ class DiscordNotificationService
             'visit_date' => optional($b->visit_date)->format('Y-m-d'),
             'status' => (string) ($b->status ?? ''),
         ];
+    }
+
+    /** @param array<string,mixed> $row */
+    private function snapshotHash(array $row): string
+    {
+        $json = json_encode($row, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+
+        return hash('sha256', $json);
+    }
+
+    /** @return array<string,mixed> */
+    private function trackingRow(
+        int $notificationLogId,
+        int $bookingId,
+        string $kind,
+        string $snapshotHash,
+    ): array {
+        return [
+            'notification_log_id' => $notificationLogId,
+            'booking_id' => $bookingId,
+            'kind' => $kind,
+            'snapshot_hash' => $snapshotHash,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ];
+    }
+
+    private function changeDescription(Booking $booking, string $targetDate): string
+    {
+        if ($booking->status === 'cancelled') {
+            return "Booking {$booking->booking_code} dibatalkan.";
+        }
+
+        if (optional($booking->visit_date)->format('Y-m-d') !== $targetDate) {
+            return "Booking {$booking->booking_code} dipindahkan ke ".optional($booking->visit_date)->format('d M Y').'.';
+        }
+
+        return "Data booking {$booking->booking_code} diperbarui.";
     }
 
     private function formatIdDate(string $ymd): string

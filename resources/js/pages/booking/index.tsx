@@ -2,6 +2,7 @@ import { Head, useForm, usePage } from "@inertiajs/react"
 import * as React from "react"
 
 import { EthicsConfirmationDialog } from "@/components/ethics-confirmation-dialog"
+import { dateHasAllowedTime, isVisitTimeAllowed, minimumBookingDate, type BookingRules } from "@/lib/booking-lead-time"
 import { IconDownload } from "@tabler/icons-react"
 import { IconMapPin } from "@tabler/icons-react"
 import { IconSearch } from "@tabler/icons-react"
@@ -87,12 +88,6 @@ function ymdToDate(ymd: string): Date | null {
   return dt
 }
 
-function minBookingDateYmd(): string {
-  const d = jakartaTodayStart()
-  d.setDate(d.getDate() + 2)
-  return ymdFromDate(d)
-}
-
 function maxBookingDateYmd(): string {
   const d = jakartaTodayStart()
   d.setDate(d.getDate() + 100)
@@ -123,8 +118,8 @@ type BookingState = {
   cal_month: number
 }
 
-function initialCalendar(): { cal_year: number; cal_month: number } {
-  const min = ymdToDate(minBookingDateYmd()) ?? new Date()
+function initialCalendar(minimumDate: string): { cal_year: number; cal_month: number } {
+  const min = ymdToDate(minimumDate) ?? new Date()
   return { cal_year: min.getFullYear(), cal_month: min.getMonth() }
 }
 
@@ -135,6 +130,7 @@ export default function BookingIndex() {
     errors: Record<string, string>
     ethics_image_url?: string | null
     ethics_pdf_url?: string | null
+    booking_rules: BookingRules
     booking_notice?: BookingNotice | null
   }>()
 
@@ -142,7 +138,8 @@ export default function BookingIndex() {
   const timeSlots = page.props.timeSlots ?? []
   const errors = page.props.errors ?? {}
 
-  const calInit = React.useMemo(() => initialCalendar(), [])
+  const minDateYmd = React.useMemo(() => minimumBookingDate(page.props.booking_rules), [page.props.booking_rules])
+  const calInit = React.useMemo(() => initialCalendar(minDateYmd), [minDateYmd])
   const [state, setState] = React.useState<BookingState>({
     step: 1,
     activity_type: "ziarah",
@@ -195,7 +192,6 @@ export default function BookingIndex() {
     ethics_confirmed: false,
   })
 
-  const minDateYmd = React.useMemo(() => minBookingDateYmd(), [])
   const maxDateYmd = React.useMemo(() => maxBookingDateYmd(), [])
 
   const selectedTimeSlot = React.useMemo(() => {
@@ -453,6 +449,11 @@ export default function BookingIndex() {
     setState((prev) => ({
       ...prev,
       booking_date: ymd,
+      time_slot_id: prev.time_slot_id && isVisitTimeAllowed(
+        page.props.booking_rules,
+        ymd,
+        timeSlots.find((slot) => slot.id === prev.time_slot_id)?.start_time ?? "",
+      ) ? prev.time_slot_id : null,
       lot_id: null,
     }))
   }
@@ -497,7 +498,7 @@ export default function BookingIndex() {
       const dt = new Date(yr, mo, d)
       dt.setHours(0, 0, 0, 0)
       const ymd = ymdFromDate(dt)
-      const disabled = dt < minDate || dt > maxDate
+      const disabled = dt < minDate || dt > maxDate || !dateHasAllowedTime(page.props.booking_rules, ymd, timeSlots)
       const selected = state.booking_date === ymd
       const cls = ["cal-day", disabled ? "disabled" : "", selected ? "selected" : ""]
         .filter(Boolean)
@@ -538,7 +539,7 @@ export default function BookingIndex() {
           {days}
         </div>
         <div className="cal-info">
-          <span>Minimal pemesanan H+2 dan maksimal adalah H+100 dari hari ini</span>
+          <span>{page.props.booking_rules.message} Maksimal 100 hari dari hari ini.</span>
         </div>
       </div>
     )
@@ -740,11 +741,13 @@ export default function BookingIndex() {
                     <div className="ts-grid">
                       {timeSlots.map((ts) => {
                         const selected = state.time_slot_id === ts.id
+                        const disabled = !state.booking_date || !isVisitTimeAllowed(page.props.booking_rules, state.booking_date, ts.start_time)
                         return (
                           <button
                             key={ts.id}
                             type="button"
                             className={`ts-btn ${selected ? "sel" : ""}`}
+                            disabled={disabled}
                             onClick={() => selectSlot(ts.id)}
                             title={`${ts.start_time} - ${ts.end_time}`}
                           >

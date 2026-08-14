@@ -1,4 +1,5 @@
 import { Head, useForm, usePage } from '@inertiajs/react';
+import { IconPlus, IconTrash } from '@tabler/icons-react';
 import * as React from 'react';
 
 import { Button } from './../../components/ui/button';
@@ -11,7 +12,9 @@ export default function AdminSettings() {
     const page = usePage<{
         values: {
             discord_webhook_url: string;
-            discord_notification_time: string;
+            discord_notification_times: string[];
+            booking_minimum_value: number;
+            booking_minimum_unit: 'hours' | 'days';
             ethics_image_url?: string | null;
             ethics_pdf_url?: string | null;
             booking_notice_enabled: boolean;
@@ -32,7 +35,9 @@ export default function AdminSettings() {
 
     const form = useForm<{
         discord_webhook_url: string;
-        discord_notification_time: string;
+        discord_notification_times: string[];
+        booking_minimum_value: number;
+        booking_minimum_unit: 'hours' | 'days';
         ethics_image: File | null;
         ethics_pdf: File | null;
         booking_notice_enabled: boolean;
@@ -43,7 +48,11 @@ export default function AdminSettings() {
         booking_notice_image: File | null;
     }>({
         discord_webhook_url: values.discord_webhook_url ?? '',
-        discord_notification_time: values.discord_notification_time ?? '08:00',
+        discord_notification_times: values.discord_notification_times?.length
+            ? values.discord_notification_times
+            : ['08:00'],
+        booking_minimum_value: values.booking_minimum_value ?? 2,
+        booking_minimum_unit: values.booking_minimum_unit ?? 'days',
         ethics_image: null,
         ethics_pdf: null,
         booking_notice_enabled: values.booking_notice_enabled ?? false,
@@ -265,19 +274,78 @@ export default function AdminSettings() {
                                 ) : null}
                             </div>
 
-                            <div className="space-y-2">
-                                <div className="text-sm font-semibold">Jam Notifikasi Discord (HH:MM)</div>
-                                <Input
-                                    type="time"
-                                    step={60}
-                                    value={form.data.discord_notification_time}
-                                    onChange={(e) => form.setData('discord_notification_time', e.target.value)}
-                                />
-                                <div className="text-xs text-gray-600">
-                                    Timezone: Asia/Jakarta. Scheduler hanya cocokkan menit (HH:MM), tidak menghitung detik.
+                            <div className="grid gap-4 border-t pt-5 sm:grid-cols-2">
+                                <div className="space-y-2">
+                                    <div className="text-sm font-semibold">Minimal Waktu Booking</div>
+                                    <Input
+                                        type="number"
+                                        min={0}
+                                        max={form.data.booking_minimum_unit === 'days' ? 100 : 2400}
+                                        value={form.data.booking_minimum_value}
+                                        onChange={(e) => form.setData('booking_minimum_value', Number(e.target.value))}
+                                    />
+                                    {errors.booking_minimum_value ? (
+                                        <div className="text-xs text-red-600">{errors.booking_minimum_value}</div>
+                                    ) : null}
                                 </div>
-                                {errors.discord_notification_time ? (
-                                    <div className="text-xs text-red-600">{errors.discord_notification_time}</div>
+                                <div className="space-y-2">
+                                    <div className="text-sm font-semibold">Satuan</div>
+                                    <select
+                                        className="h-9 w-full rounded-md border bg-white px-3 text-sm"
+                                        value={form.data.booking_minimum_unit}
+                                        onChange={(e) => form.setData('booking_minimum_unit', e.target.value as 'hours' | 'days')}
+                                    >
+                                        <option value="hours">Jam</option>
+                                        <option value="days">Hari (H+)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                <div className="text-sm font-semibold">Jadwal Laporan Discord</div>
+                                {form.data.discord_notification_times.map((time, index) => (
+                                    <div key={`${index}-${time}`} className="flex items-center gap-2">
+                                        <Input
+                                            type="time"
+                                            step={60}
+                                            value={time}
+                                            onChange={(e) => {
+                                                const next = [...form.data.discord_notification_times];
+                                                next[index] = e.target.value;
+                                                form.setData('discord_notification_times', next);
+                                            }}
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="icon"
+                                            title="Hapus jam laporan"
+                                            aria-label="Hapus jam laporan"
+                                            disabled={form.data.discord_notification_times.length === 1}
+                                            onClick={() => form.setData(
+                                                'discord_notification_times',
+                                                form.data.discord_notification_times.filter((_, i) => i !== index),
+                                            )}
+                                        >
+                                            <IconTrash aria-hidden="true" />
+                                        </Button>
+                                    </div>
+                                ))}
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    disabled={form.data.discord_notification_times.length >= 6}
+                                    onClick={() => form.setData(
+                                        'discord_notification_times',
+                                        [...form.data.discord_notification_times, '14:00'],
+                                    )}
+                                >
+                                    <IconPlus aria-hidden="true" />
+                                    Tambah Jam
+                                </Button>
+                                <div className="text-xs text-gray-600">Timezone: Asia/Jakarta.</div>
+                                {errors.discord_notification_times ? (
+                                    <div className="text-xs text-red-600">{errors.discord_notification_times}</div>
                                 ) : null}
                             </div>
 

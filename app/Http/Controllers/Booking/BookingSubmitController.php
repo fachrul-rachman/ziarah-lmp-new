@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Booking;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Lot;
+use App\Models\TimeSlot;
+use App\Services\BookingLeadTimeService;
 use App\Services\BookingService;
 use App\Support\Normalization;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -18,7 +20,10 @@ use Inertia\Response;
 
 class BookingSubmitController extends Controller
 {
-    public function __construct(private readonly BookingService $bookingService) {}
+    public function __construct(
+        private readonly BookingService $bookingService,
+        private readonly BookingLeadTimeService $leadTime,
+    ) {}
 
     public function store(Request $request): RedirectResponse
     {
@@ -76,12 +81,10 @@ class BookingSubmitController extends Controller
             ]);
         }
 
-        // Enforce H+2 rule server-side (Asia/Jakarta).
-        $minDate = now()->timezone('Asia/Jakarta')->startOfDay()->addDays(2);
-        $visitDate = CarbonImmutable::parse($validated['visit_date'], 'Asia/Jakarta')->startOfDay();
-        if ($visitDate->lessThan($minDate)) {
+        $startTime = TimeSlot::query()->whereKey((int) $validated['time_slot_id'])->value('start_time');
+        if (! $startTime || ! $this->leadTime->allows($validated['visit_date'], (string) $startTime)) {
             return redirect()->back()->withErrors([
-                'visit_date' => 'Tanggal kunjungan minimal H+2.',
+                'visit_date' => $this->leadTime->message(),
             ]);
         }
 

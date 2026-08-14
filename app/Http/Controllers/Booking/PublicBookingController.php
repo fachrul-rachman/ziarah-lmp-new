@@ -7,6 +7,7 @@ use App\Models\Booking;
 use App\Models\Location;
 use App\Models\Lot;
 use App\Models\TimeSlot;
+use App\Services\BookingLeadTimeService;
 use App\Services\CancelBookingService;
 use App\Services\RescheduleBookingService;
 use App\Support\Normalization;
@@ -21,6 +22,7 @@ class PublicBookingController extends Controller
     public function __construct(
         private readonly CancelBookingService $cancelService,
         private readonly RescheduleBookingService $rescheduleService,
+        private readonly BookingLeadTimeService $leadTime,
     ) {}
 
     public function show(string $publicToken): Response
@@ -103,6 +105,7 @@ class PublicBookingController extends Controller
             'expired' => $expired,
             'locations' => $locations,
             'timeSlots' => $timeSlots,
+            'booking_rules' => $this->leadTime->payload(),
         ]);
     }
 
@@ -161,11 +164,10 @@ class PublicBookingController extends Controller
             ]);
         }
 
-        $minDate = now()->timezone('Asia/Jakarta')->startOfDay()->addDays(2);
-        $visitDate = CarbonImmutable::parse($validated['visit_date'], 'Asia/Jakarta')->startOfDay();
-        if ($visitDate->lessThan($minDate)) {
+        $startTime = TimeSlot::query()->whereKey((int) $validated['time_slot_id'])->value('start_time');
+        if (! $startTime || ! $this->leadTime->allows($validated['visit_date'], (string) $startTime)) {
             return redirect()->back()->withErrors([
-                'visit_date' => 'Tanggal kunjungan minimal H+2.',
+                'visit_date' => $this->leadTime->message(),
             ]);
         }
 

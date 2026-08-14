@@ -2,6 +2,8 @@
 
 use App\Models\User;
 use App\Models\WalkIn;
+use App\Services\BookingLeadTimeService;
+use App\Services\ReportScheduleService;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\UploadedFile;
@@ -232,6 +234,44 @@ test('admin can save the booking notice and its image', function () {
     expect(DB::table('settings')->where('key', 'booking_notice_enabled')->value('value'))->toBe('1')
         ->and(DB::table('settings')->where('key', 'booking_notice_title')->value('value'))->toBe('Perubahan Jalur Tangerang')
         ->and(DB::table('settings')->where('key', 'booking_notice_image_path')->value('value'))->toEndWith('.png');
+});
+
+test('admin can configure booking lead time and multiple report times', function () {
+    $admin = User::query()->create([
+        'name' => 'Admin Schedule',
+        'email' => 'admin-schedule@example.com',
+        'password' => bcrypt('password'),
+    ]);
+
+    $this->actingAs($admin)->post('/admin/settings', [
+        'discord_webhook_url' => '',
+        'discord_notification_times' => ['08:00', '14:00'],
+        'booking_minimum_value' => 18,
+        'booking_minimum_unit' => 'hours',
+    ])->assertSessionHasNoErrors();
+
+    expect(app(ReportScheduleService::class)->times())->toBe(['08:00', '14:00'])
+        ->and(app(BookingLeadTimeService::class)->rule())->toBe(['value' => 18, 'unit' => 'hours']);
+});
+
+test('booking lead time supports exact hours and calendar days', function () {
+    CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-08-14 16:00:00', 'Asia/Jakarta'));
+    DB::table('settings')->insert([
+        ['key' => 'booking_minimum_value', 'value' => '18'],
+        ['key' => 'booking_minimum_unit', 'value' => 'hours'],
+    ]);
+
+    $leadTime = app(BookingLeadTimeService::class);
+    expect($leadTime->allows('2026-08-15', '09:59'))->toBeFalse()
+        ->and($leadTime->allows('2026-08-15', '10:00'))->toBeTrue();
+
+    DB::table('settings')->where('key', 'booking_minimum_value')->update(['value' => '2']);
+    DB::table('settings')->where('key', 'booking_minimum_unit')->update(['value' => 'days']);
+
+    expect($leadTime->allows('2026-08-15', '19:00'))->toBeFalse()
+        ->and($leadTime->allows('2026-08-16', '08:00'))->toBeTrue();
+
+    CarbonImmutable::setTestNow();
 });
 
 test('booking notice is shown during its date range and hidden after it expires', function () {

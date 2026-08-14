@@ -3,14 +3,19 @@
 namespace App\Http\Controllers\Booking;
 
 use App\Http\Controllers\Controller;
+use App\Models\TimeSlot;
 use App\Services\BookingAvailabilityService;
+use App\Services\BookingLeadTimeService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class BookingAvailabilityController extends Controller
 {
-    public function __construct(private readonly BookingAvailabilityService $availability) {}
+    public function __construct(
+        private readonly BookingAvailabilityService $availability,
+        private readonly BookingLeadTimeService $leadTime,
+    ) {}
 
     public function lots(Request $request): JsonResponse
     {
@@ -24,13 +29,13 @@ class BookingAvailabilityController extends Controller
         ]);
 
         $today = now()->timezone('Asia/Jakarta')->startOfDay();
-        $minDate = $today->addDays((int) config('booking.lots_min_days_ahead', 2));
         $maxDate = $today->addDays((int) config('booking.lots_max_days_ahead', 100));
         $visitDate = CarbonImmutable::parse($validated['visit_date'], 'Asia/Jakarta')->startOfDay();
+        $startTime = TimeSlot::query()->whereKey((int) $validated['time_slot_id'])->value('start_time');
 
-        if ($visitDate->lessThan($minDate)) {
+        if (! $startTime || ! $this->leadTime->allows($visitDate->toDateString(), (string) $startTime)) {
             return response()->json([
-                'message' => 'Tanggal kunjungan minimal H+2.',
+                'message' => $this->leadTime->message(),
             ], 422);
         }
 

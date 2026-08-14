@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\ReportScheduleService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -12,6 +13,8 @@ use Inertia\Response;
 
 class AdminPageController extends Controller
 {
+    public function __construct(private readonly ReportScheduleService $reportSchedule) {}
+
     public function dashboard(): Response
     {
         return Inertia::render('admin/dashboard');
@@ -37,6 +40,9 @@ class AdminPageController extends Controller
         $keys = [
             'discord_webhook_url',
             'discord_notification_time',
+            'discord_notification_times',
+            'booking_minimum_value',
+            'booking_minimum_unit',
             'ethics_image_path',
             'ethics_pdf_path',
             'booking_notice_enabled',
@@ -52,7 +58,9 @@ class AdminPageController extends Controller
         return Inertia::render('admin/settings', [
             'values' => [
                 'discord_webhook_url' => $map['discord_webhook_url'] ?? '',
-                'discord_notification_time' => $map['discord_notification_time'] ?? '08:00',
+                'discord_notification_times' => $this->reportSchedule->times(),
+                'booking_minimum_value' => (int) ($map['booking_minimum_value'] ?? 2),
+                'booking_minimum_unit' => ($map['booking_minimum_unit'] ?? 'days') === 'hours' ? 'hours' : 'days',
                 'ethics_image_url' => ! empty($map['ethics_image_path']) && Storage::disk('public')->exists($map['ethics_image_path'])
                     ? Storage::disk('public')->url($map['ethics_image_path'])
                     : null,
@@ -76,7 +84,11 @@ class AdminPageController extends Controller
     {
         $validated = $request->validate([
             'discord_webhook_url' => ['nullable', 'string', 'max:2000', 'url'],
-            'discord_notification_time' => ['required', 'string', 'regex:/^([01]\\d|2[0-3]):[0-5]\\d$/'],
+            'discord_notification_time' => ['nullable', 'string', 'regex:/^([01]\\d|2[0-3]):[0-5]\\d$/'],
+            'discord_notification_times' => ['nullable', 'array', 'min:1', 'max:6'],
+            'discord_notification_times.*' => ['required', 'string', 'distinct', 'regex:/^([01]\\d|2[0-3]):[0-5]\\d$/'],
+            'booking_minimum_value' => ['nullable', 'integer', 'min:0', 'max:2400'],
+            'booking_minimum_unit' => ['nullable', 'string', 'in:hours,days'],
             'ethics_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'ethics_pdf' => ['nullable', 'file', 'mimes:pdf', 'max:4096'],
             'booking_notice_enabled' => ['sometimes', 'boolean'],
@@ -86,8 +98,11 @@ class AdminPageController extends Controller
             'booking_notice_end_date' => ['nullable', 'required_if:booking_notice_enabled,1', 'date_format:Y-m-d', 'after_or_equal:booking_notice_start_date'],
             'booking_notice_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
         ], [
-            'discord_notification_time.required' => 'Jam kirim wajib diisi.',
             'discord_notification_time.regex' => 'Format jam harus HH:MM (00-23).',
+            'discord_notification_times.min' => 'Minimal satu jam laporan harus diisi.',
+            'discord_notification_times.max' => 'Maksimal enam jadwal laporan.',
+            'discord_notification_times.*.distinct' => 'Jam laporan tidak boleh sama.',
+            'discord_notification_times.*.regex' => 'Format jam laporan harus HH:MM (00-23).',
             'discord_webhook_url.url' => 'Format URL tidak valid.',
             'ethics_image.image' => 'File etika berziarah harus berupa gambar.',
             'ethics_image.mimes' => 'Gambar harus berformat JPG, PNG, atau WebP.',
@@ -106,7 +121,26 @@ class AdminPageController extends Controller
 
         // Allow webhook empty string (treated as disabled)
         $webhook = trim((string) ($validated['discord_webhook_url'] ?? ''));
-        $time = trim((string) $validated['discord_notification_time']);
+        $times = $validated['discord_notification_times'] ?? null;
+        if (! is_array($times)) {
+            $legacyTime = trim((string) ($validated['discord_notification_time'] ?? ''));
+            $times = $legacyTime !== '' ? [$legacyTime] : $this->reportSchedule->times();
+        }
+        $times = array_values(array_unique($times));
+        sort($times);
+
+        $minimumUnit = (string) ($validated['booking_minimum_unit']
+            ?? DB::table('settings')->where('key', 'booking_minimum_unit')->value('value')
+            ?? 'days');
+        $minimumValue = (int) ($validated['booking_minimum_value']
+            ?? DB::table('settings')->where('key', 'booking_minimum_value')->value('value')
+            ?? 2);
+
+        if ($minimumUnit === 'days' && $minimumValue > 100) {
+            return redirect()->back()->withErrors([
+                'booking_minimum_value' => 'Batas minimum dalam hari maksimal 100.',
+            ]);
+        }
 
         DB::table('settings')->upsert([
             [
@@ -115,7 +149,19 @@ class AdminPageController extends Controller
             ],
             [
                 'key' => 'discord_notification_time',
-                'value' => $time,
+                'value' => $times[0],
+            ],
+            [
+                'key' => 'discord_notification_times',
+                'value' => json_encode($times),
+            ],
+            [
+                'key' => 'booking_minimum_value',
+                'value' => (string) $minimumValue,
+            ],
+            [
+                'key' => 'booking_minimum_unit',
+                'value' => $minimumUnit,
             ],
             [
                 'key' => 'booking_notice_enabled',

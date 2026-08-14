@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Booking;
 use App\Http\Controllers\Controller;
 use App\Models\Location;
 use App\Models\TimeSlot;
+use App\Services\BookingLeadTimeService;
 use App\Services\EthicsConsentService;
 use App\Services\LotSizeRuleService;
 use Carbon\CarbonImmutable;
@@ -20,6 +21,7 @@ class BookingController extends Controller
     public function __construct(
         private readonly LotSizeRuleService $sizeRules,
         private readonly EthicsConsentService $ethicsConsent,
+        private readonly BookingLeadTimeService $leadTime,
     ) {}
 
     public function index(): Response
@@ -76,6 +78,7 @@ class BookingController extends Controller
             'timeSlots' => $timeSlots,
             'ethics_image_url' => $this->ethicsConsent->imageUrl(),
             'ethics_pdf_url' => $this->ethicsConsent->pdfUrl(),
+            'booking_rules' => $this->leadTime->payload(),
             'booking_notice' => $notice,
         ]);
     }

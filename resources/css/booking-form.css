@@ -369,6 +369,10 @@
   background: #fff;
   box-shadow: 0 0 0 3px rgba(26, 39, 68, 0.08);
 }
+.booking-form .ts-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
 
 /* Search + grids */
 .booking-form .row-between {
@@ -655,4 +659,3 @@
   font-weight: 500;
   text-align: right;
 }
-
