@@ -49,7 +49,7 @@ class ThrottleBookingLots
         try {
             /** @var Repository $repository */
             $repository = cache()->store($store);
-            $repository->getStore();
+            $repository->get('booking:throttle:health');
 
             return $store;
         } catch (Throwable) {

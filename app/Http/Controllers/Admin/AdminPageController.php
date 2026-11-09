@@ -15,26 +15,6 @@ class AdminPageController extends Controller
 {
     public function __construct(private readonly ReportScheduleService $reportSchedule) {}
 
-    public function dashboard(): Response
-    {
-        return Inertia::render('admin/dashboard');
-    }
-
-    public function locations(): Response
-    {
-        return Inertia::render('admin/locations');
-    }
-
-    public function timeSlots(): Response
-    {
-        return Inertia::render('admin/time-slots');
-    }
-
-    public function events(): Response
-    {
-        return Inertia::render('admin/events');
-    }
-
     public function settings(): Response
     {
         $keys = [

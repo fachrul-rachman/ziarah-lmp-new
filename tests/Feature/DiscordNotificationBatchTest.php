@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 beforeEach(function () {
     foreach (['notification_log_bookings', 'notification_logs', 'booking_facilities', 'bookings', 'lots', 'time_slots', 'zones', 'locations', 'settings'] as $table) {
@@ -48,6 +49,8 @@ beforeEach(function () {
         $table->id();
         $table->string('public_token');
         $table->string('activity_type');
+        $table->unsignedBigInteger('visitation_plan_id')->nullable();
+        $table->string('planned_moment')->nullable();
         $table->string('booking_code');
         $table->string('customer_name');
         $table->string('customer_email');
@@ -201,3 +204,15 @@ function createBatchBooking(int $lotId, string $code, string $visitDate): int
 
     return $id;
 }
+
+test('Discord summary and spreadsheet identify planned moments even in ziarah reports', function () {
+    $id = createBatchBooking(1, 'PLANNED-1', '2026-08-15');
+    DB::table('bookings')->where('id', $id)->update(['visitation_plan_id' => 1, 'planned_moment' => '40']);
+    $logId = DB::table('notification_logs')->insertGetId(['target_date' => '2026-08-15', 'scheduled_time' => '09:00', 'status' => 'processing']);
+    $result = app(DiscordNotificationService::class)->sendForTargetDate('2026-08-15', $logId);
+    expect($result['message'])->toContain('Ziarah Terencana: 1');
+    $sheet = IOFactory::load(Storage::path($result['attachments'][0]['path']));
+    $values = collect($sheet->getActiveSheet()->toArray())->flatten()->all();
+    expect($values)->toContain('Ziarah Terencana 40 Hari');
+    $sheet->disconnectWorksheets();
+});

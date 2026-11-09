@@ -113,6 +113,8 @@ class ExportReportService
                 'customer_name',
                 'additional_note',
                 'activity_type',
+                'visitation_plan_id',
+                'planned_moment',
                 'visit_date',
                 'status',
                 'location_id',
@@ -160,14 +162,6 @@ class ExportReportService
                 $visitDateLabel = optional($b->visit_date)->timezone('Asia/Jakarta')->format('d M Y');
                 $visitDateSort = optional($b->visit_date)->format('Y-m-d') ?? '';
 
-                $activityLabel = match ($b->activity_type) {
-                    'ziarah' => 'Ziarah',
-                    'naik_batu' => 'Naik Batu',
-                    'start_work' => 'Start Work',
-                    'wang_san' => 'Wang San',
-                    default => (string) ($b->activity_type ?? ''),
-                };
-
                 $graveType = $b->grave_type ?? $b->lot?->grave_type;
                 $graveLabel = $graveType === 'kotak_abu' ? 'Kotak Abu' : 'Makam';
 
@@ -181,7 +175,7 @@ class ExportReportService
                 return [
                     'booking_id' => $b->id,
                     'activity_type' => (string) ($b->activity_type ?? ''),
-                    'activity_label' => $activityLabel,
+                    'activity_label' => $b->activityLabel(),
                     'visit_schedule' => trim(($visitDateLabel ?: '').($visitDateLabel && $start ? ', ' : '').($start ?: '')),
                     'visit_date_sort' => $visitDateSort,
                     'time_sort' => $start,

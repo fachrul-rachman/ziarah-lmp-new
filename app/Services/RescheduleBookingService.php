@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Jobs\SendBookingConfirmedEmailJob;
 use App\Models\Booking;
 use App\Models\Lot;
 use Carbon\CarbonImmutable;
@@ -13,7 +12,8 @@ class RescheduleBookingService
 {
     public function __construct(
         private readonly BookingCodeService $codeService,
-        private readonly LotSizeRuleService $sizeRules,
+        private readonly BookingRulesService $rules,
+        private readonly BookingWhatsAppService $whatsapp,
     ) {}
 
     /**
@@ -39,39 +39,20 @@ class RescheduleBookingService
      */
     public function reschedule(Booking $booking, array $data): Booking
     {
-        if ($this->isExpired($booking)) {
-            throw new \RuntimeException('Masa berlaku aksi sudah habis.');
-        }
-
         return DB::transaction(function () use ($booking, $data) {
             $additionalNote = trim((string) ($data['additional_note'] ?? ''));
 
-            $booking->refresh();
+            $booking = Booking::query()->lockForUpdate()->findOrFail($booking->id);
+            if (! in_array($booking->status, ['confirmed', 'rescheduled'], true) || $this->isExpired($booking)) {
+                throw new \RuntimeException('Booking sudah tidak dapat diubah.');
+            }
             $booking->loadMissing(['facilities']);
+
+            $data['facilities'] = $this->rules->validate($data, $booking);
 
             $lot = Lot::query()
                 ->whereKey($data['lot_id'])
                 ->firstOrFail(['id', 'normalized_lot_number', 'normalized_size', 'size']);
-
-            $rule = $this->sizeRules->ruleForSize((string) ($lot->normalized_size ?: $lot->size));
-            $chairs = (int) $data['facilities']['chairs_count'];
-            $burn = (int) $data['facilities']['burn_barrels_count'];
-
-            if ($chairs < (int) $rule['chairs_min'] || $chairs > (int) $rule['chairs_max']) {
-                throw new \RuntimeException("Kursi minimal {$rule['chairs_min']} dan maksimal {$rule['chairs_max']}.");
-            }
-            if ($burn < (int) $rule['burn_barrels_min'] || $burn > (int) $rule['burn_barrels_max']) {
-                throw new \RuntimeException("Tong bakar minimal {$rule['burn_barrels_min']} dan maksimal {$rule['burn_barrels_max']}.");
-            }
-            if (! $rule['tent_allowed']) {
-                $data['facilities']['has_tent'] = false;
-            }
-            if (! $rule['prayer_table_allowed']) {
-                $data['facilities']['has_prayer_table'] = false;
-            }
-            if (! $rule['lamp_allowed']) {
-                $data['facilities']['has_lamp'] = false;
-            }
 
             $oldFacilities = [
                 'chairs_count' => (int) ($booking->facilities->chairs_count ?? 0),
@@ -109,7 +90,8 @@ class RescheduleBookingService
                     (string) $lot->normalized_lot_number,
                 ),
                 'customer_name' => $data['customer_name'],
-                'customer_email' => $data['customer_email'],
+                'customer_email' => $data['customer_email'] ?? null,
+                'whatsapp_consented_at' => $data['whatsapp_consented_at'] ?? $booking->whatsapp_consented_at,
                 'customer_phone' => $data['customer_phone'] ?? $booking->customer_phone,
                 'additional_note' => $additionalNote !== '' ? $additionalNote : null,
                 'location_id' => $data['location_id'],
@@ -142,7 +124,7 @@ class RescheduleBookingService
                 ],
             );
 
-            DB::afterCommit(fn () => SendBookingConfirmedEmailJob::dispatch($booking->id));
+            $this->whatsapp->queue($booking, 'rescheduled');
 
             return $booking;
         });

@@ -27,6 +27,7 @@ type Booking = {
   activity_type: string
   customer_name: string
   customer_email: string
+  visitation_plan_id?: number | null
   customer_phone?: string | null
   additional_note?: string | null
   grave_type: string
@@ -101,11 +102,7 @@ function ymdToDate(ymd: string): Date | null {
   return dt
 }
 
-function maxBookingDateYmd(): string {
-  const d = jakartaTodayStart()
-  d.setDate(d.getDate() + 100)
-  return ymdFromDate(d)
-}
+
 
 type BookingState = {
   step: 1 | 2 | 3 | 4
@@ -142,6 +139,7 @@ export default function BookingReschedule() {
     expired: boolean
     locations: Location[]
     timeSlots: TimeSlot[]
+    maximum_date: string
     booking_rules: BookingRules
     errors: Record<string, string>
   }>()
@@ -177,7 +175,7 @@ export default function BookingReschedule() {
     has_prayer_table: booking.facilities.has_prayer_table,
     has_lamp: booking.facilities.has_lamp,
     name: booking.customer_name,
-    email: booking.customer_email,
+    email: booking.customer_email ?? "",
     phone: booking.customer_phone ?? "",
     additional_note: booking.additional_note ?? "",
     cal_year: calInit.cal_year,
@@ -186,6 +184,7 @@ export default function BookingReschedule() {
 
   const [zones, setZones] = React.useState<Zone[]>([])
   const [lots, setLots] = React.useState<Lot[]>([])
+  const [lotsError, setLotsError] = React.useState("")
   const [hiddenFacilities, setHiddenFacilities] = React.useState<string[]>([])
   const [hiddenFacilityReasons, setHiddenFacilityReasons] = React.useState<HiddenFacilityReason[]>([])
   const [defaultSizeRule, setDefaultSizeRule] = React.useState<LotSizeRule | null>(null)
@@ -210,7 +209,7 @@ export default function BookingReschedule() {
     additional_note: "",
   })
 
-  const maxDateYmd = React.useMemo(() => maxBookingDateYmd(), [])
+  const maxDateYmd = page.props.maximum_date
 
   const selectedTimeSlot = React.useMemo(() => {
     if (!state.time_slot_id) return null
@@ -292,14 +291,24 @@ export default function BookingReschedule() {
       grave_type: next.grave_type,
       visit_date: next.booking_date,
       time_slot_id: String(next.time_slot_id),
-      exclude_booking_id: String(booking.id),
+      booking_token: booking.public_token,
     })
-    const res = await fetch(`/booking/lots?${params.toString()}`, {
-      headers: { Accept: "application/json" },
-    })
-    if (!res.ok) return
-    const data = await res.json()
-    setLots(data.lots ?? [])
+    try {
+      const res = await fetch(`/booking/lots?${params.toString()}`, {
+        headers: { Accept: "application/json" },
+      })
+      if (!res.ok) {
+        setLots([])
+        setLotsError("Daftar lot gagal dimuat. Coba pilih ulang zona atau jam kunjungan.")
+        return
+      }
+      const data = await res.json()
+      setLots(data.lots ?? [])
+      setLotsError("")
+    } catch {
+      setLots([])
+      setLotsError("Koneksi terputus saat memuat lot. Coba pilih ulang zona atau jam kunjungan.")
+    }
   }
 
   async function fetchHiddenFacilities(next: {
@@ -373,7 +382,7 @@ export default function BookingReschedule() {
       return
     }
 
-    if (didInitLotsRef.current) {
+    if (didInitLotsRef.current && !booking.visitation_plan_id) {
       setState((prev) => ({ ...prev, lot_id: null, lot_search: "" }))
     } else {
       didInitLotsRef.current = true
@@ -441,7 +450,7 @@ export default function BookingReschedule() {
       return !!state.location_id && !!state.grave_type
     }
     if (state.step === 2) {
-      return !!state.zone_id && !!state.booking_date && !!state.time_slot_id && !!state.lot_id
+      return !!state.zone_id && !!state.booking_date && !!state.time_slot_id && !!state.lot_id && lots.some((lot) => lot.id === state.lot_id)
     }
     if (state.step === 3) return true
     return false
@@ -483,7 +492,7 @@ export default function BookingReschedule() {
         ymd,
         timeSlots.find((slot) => slot.id === prev.time_slot_id)?.start_time ?? "",
       ) ? prev.time_slot_id : null,
-      lot_id: null,
+      lot_id: booking.visitation_plan_id ? booking.lot.id : null,
     }))
   }
 
@@ -491,7 +500,7 @@ export default function BookingReschedule() {
     setState((prev) => ({
       ...prev,
       time_slot_id: id,
-      lot_id: null,
+      lot_id: booking.visitation_plan_id ? booking.lot.id : null,
     }))
   }
 
@@ -568,7 +577,7 @@ export default function BookingReschedule() {
           {days}
         </div>
         <div className="cal-info">
-          <span>{page.props.booking_rules.message} Maksimal 100 hari dari hari ini.</span>
+          <span>{page.props.booking_rules.message} Batas tanggal {maxDateYmd}.</span>
         </div>
       </div>
     )
@@ -585,7 +594,7 @@ export default function BookingReschedule() {
       return
     }
 
-    postForm.setData({
+    const payload = {
       activity_type: state.activity_type,
       location_id: String(state.location_id),
       grave_type: state.grave_type,
@@ -601,8 +610,11 @@ export default function BookingReschedule() {
       customer_name: state.name,
       customer_email: state.email,
       customer_phone: state.phone,
+      whatsapp_consent: true,
       additional_note: state.additional_note,
-    })
+    }
+
+    postForm.transform(() => payload)
 
     postForm.post(`/booking/${booking.public_token}/reschedule`)
   }
@@ -700,6 +712,7 @@ export default function BookingReschedule() {
                             key={l.id}
                             type="button"
                             className={`loc-btn ${selected ? "sel" : ""}`}
+                            disabled={!!booking.visitation_plan_id}
                             onClick={() => selectLocation(l.id)}
                           >
                             <div className={`loc-icon ${selected ? "sel" : ""}`}>⌂</div>
@@ -726,6 +739,7 @@ export default function BookingReschedule() {
                       <select
                         className="inp"
                         value={state.grave_type}
+                        disabled={!!booking.visitation_plan_id}
                         onChange={(e) =>
                           setState((p) => ({ ...p, grave_type: e.target.value }))
                         }
@@ -748,7 +762,9 @@ export default function BookingReschedule() {
                 <div className="space">
                   <div>
                     <label className="field-label">Tanggal kunjungan</label>
-                    {renderCalendar()}
+                    {timeSlots.length > 0 ? renderCalendar() : (
+                      <p role="status" className="hint-box">Jadwal kunjungan belum tersedia. Silakan hubungi admin untuk menambahkan slot waktu.</p>
+                    )}
                     {errors.visit_date ? (
                       <p style={{ marginTop: 6, fontSize: 12, color: "#b42318" }}>
                         {errors.visit_date}
@@ -813,6 +829,7 @@ export default function BookingReschedule() {
                               <button
                                 key={z.id}
                                 type="button"
+                                disabled={!!booking.visitation_plan_id}
                                 className={`chip-btn ${selected ? "sel" : ""}`}
                                 onClick={() =>
                                   setState((p) => ({ ...p, zone_id: z.id, lot_id: null }))
@@ -859,6 +876,7 @@ export default function BookingReschedule() {
                           </div>
                         </div>
                         <div className="scroll-box" style={{ marginTop: 8, maxHeight: 260 }}>
+                          {lotsError ? <p role="alert" className="text-sm text-red-700">{lotsError}</p> : null}
                           {filteredLots.length === 0 ? (
                             <p style={{ fontSize: 13, color: "var(--hint)" }}>Tidak ditemukan.</p>
                           ) : (
@@ -869,6 +887,7 @@ export default function BookingReschedule() {
                                   <button
                                     key={l.id}
                                     type="button"
+                                    disabled={!!booking.visitation_plan_id}
                                     className={`chip-btn ${selected ? "sel" : ""}`}
                                     onClick={() => setState((p) => ({ ...p, lot_id: l.id }))}
                                     title={`Ukuran: ${l.size}`}
@@ -1071,22 +1090,12 @@ export default function BookingReschedule() {
                     ) : null}
                   </div>
                   <div>
-                    <label className="field-label">Alamat email</label>
-                    <input
-                      className="inp"
-                      type="email"
-                      placeholder="cth. budi@email.com"
-                      value={state.email}
-                      onChange={(e) => setState((p) => ({ ...p, email: e.target.value }))}
-                    />
-                    {errors.customer_email ? (
-                      <p style={{ marginTop: 6, fontSize: 12, color: "#b42318" }}>
-                        {errors.customer_email}
-                      </p>
-                    ) : null}
+                    <label className="field-label" htmlFor="customer-email">Email</label>
+                    <input id="customer-email" className="inp" type="email" autoComplete="email" placeholder="nama@email.com" value={state.email} onChange={(e) => setState((p) => ({ ...p, email: e.target.value }))} />
+                    {errors.customer_email && <p role="alert" className="mt-1 text-sm text-red-700">{errors.customer_email}</p>}
                   </div>
                   <div>
-                    <label className="field-label">Nomor telepon</label>
+                    <label className="field-label">Nomor WhatsApp aktif</label>
                     <input
                       className="inp"
                       type="tel"
@@ -1099,7 +1108,7 @@ export default function BookingReschedule() {
                         {errors.customer_phone}
                       </p>
                     ) : null}
-                  </div>
+                    </div>
 
                   <div className="summary">
                     <div className="summary-head">
@@ -1164,6 +1173,7 @@ export default function BookingReschedule() {
                     ) : null}
                   </div>
 
+                  <p className="text-xs leading-5 text-[#5a6480]">Dengan konfirmasi, Anda setuju menerima notifikasi WhatsApp.</p>
                   <button
                     type="button"
                     className="btn-confirm"

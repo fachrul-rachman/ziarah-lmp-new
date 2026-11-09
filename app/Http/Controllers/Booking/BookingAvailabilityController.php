@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Booking;
 
 use App\Http\Controllers\Controller;
+use App\Models\Booking;
 use App\Models\TimeSlot;
 use App\Services\BookingAvailabilityService;
 use App\Services\BookingLeadTimeService;
@@ -26,10 +27,19 @@ class BookingAvailabilityController extends Controller
             'visit_date' => ['required', 'date'],
             'time_slot_id' => ['required', 'integer', 'min:1'],
             'exclude_booking_id' => ['nullable', 'integer', 'min:1'],
+            'booking_token' => ['nullable', 'string', 'max:64'],
         ]);
 
         $today = now()->timezone('Asia/Jakarta')->startOfDay();
         $maxDate = $today->addDays((int) config('booking.lots_max_days_ahead', 100));
+        $excludedId = null;
+        if (! empty($validated['booking_token'])) {
+            $booking = Booking::where('public_token', $validated['booking_token'])->firstOrFail();
+            $excludedId = $booking->id;
+            if ($booking->visitation_plan_id) {
+                $maxDate = $booking->visitationPlan->maximumDate();
+            }
+        }
         $visitDate = CarbonImmutable::parse($validated['visit_date'], 'Asia/Jakarta')->startOfDay();
         $startTime = TimeSlot::query()->whereKey((int) $validated['time_slot_id'])->value('start_time');
 
@@ -51,7 +61,7 @@ class BookingAvailabilityController extends Controller
             $validated['grave_type'],
             $visitDate->toDateString(),
             (int) $validated['time_slot_id'],
-            isset($validated['exclude_booking_id']) ? (int) $validated['exclude_booking_id'] : null,
+            $excludedId,
         );
 
         return response()->json(['lots' => $lots]);

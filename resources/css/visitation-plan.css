@@ -1,0 +1,997 @@
+.planned-visit {
+    color: var(--navy);
+    background: #f5f6f8;
+    --plan-shadow: 0 8px 28px rgb(26 39 68 / 4%);
+}
+.planned-visit svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    stroke-width: 1.7;
+}
+.planned-visit button,
+.planned-visit a,
+.planned-visit input {
+    -webkit-tap-highlight-color: transparent;
+}
+.planned-visit button:focus-visible,
+.planned-visit a:focus-visible,
+.planned-visit summary:focus-visible {
+    outline: 3px solid var(--navy);
+    outline-offset: 3px;
+}
+.planned-visit .plan-brand {
+    max-width: 1144px;
+    padding: 24px 32px;
+    margin: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.planned-visit .plan-brand-mark {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    background: var(--navy);
+    color: #f1d68a;
+    border-radius: 14px;
+}
+.planned-visit .plan-brand-mark svg {
+    width: 25px;
+    height: 25px;
+}
+.planned-visit .plan-brand strong {
+    display: block;
+    font-size: 15px;
+    font-weight: 650;
+    letter-spacing: -0.3px;
+}
+.planned-visit .plan-brand small {
+    display: block;
+    color: var(--muted);
+    font-size: 11px;
+    margin-top: 3px;
+}
+.planned-visit .plan-container {
+    max-width: 1144px;
+    padding: 16px 32px 40px;
+    margin: auto;
+}
+.planned-visit .plan-page-heading {
+    margin: 4px 0 26px;
+}
+.planned-visit .plan-eyebrow {
+    color: #806323;
+    font-size: 11px;
+    font-weight: 650;
+    text-transform: uppercase;
+    letter-spacing: 1.8px;
+}
+.planned-visit h1 {
+    margin: 8px 0;
+    font-size: clamp(29px, 3.5vw, 38px);
+    font-weight: 650;
+    letter-spacing: -1.2px;
+    line-height: 1.2;
+}
+.planned-visit .plan-page-heading > p {
+    color: var(--muted);
+    font-size: 14px;
+}
+.planned-visit .plan-memorial {
+    background: var(--navy);
+    color: white;
+    border-radius: 18px;
+    padding: 26px 30px;
+    display: flex;
+    align-items: center;
+    gap: 34px;
+    margin-bottom: 28px;
+}
+.planned-visit .plan-memorial-name {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+}
+.planned-visit .plan-memorial-icon {
+    color: #e9ce87;
+    border: 1px solid rgb(233 206 135 / 35%);
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+}
+.planned-visit .plan-memorial-name span:not(.plan-memorial-icon) {
+    color: #c7cfe0;
+    font-size: 11px;
+}
+.planned-visit .plan-memorial-name h2 {
+    margin-top: 4px;
+    font-size: 23px;
+    font-weight: 550;
+    letter-spacing: -0.5px;
+    overflow-wrap: anywhere;
+}
+.planned-visit .plan-memorial-details {
+    display: flex;
+    align-items: flex-start;
+    gap: 28px;
+}
+.planned-visit .plan-memorial-details dt {
+    color: #c7cfe0;
+    font-size: 11px;
+    margin-bottom: 7px;
+}
+.planned-visit .plan-memorial-details dd {
+    font-size: 13px;
+    font-weight: 500;
+}
+.planned-visit .plan-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 390px;
+    align-items: start;
+    gap: 28px;
+}
+.planned-visit .plan-main {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    min-width: 0;
+}
+.planned-visit .plan-panel {
+    border: 1px solid var(--border);
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: var(--plan-shadow);
+}
+.planned-visit .plan-section-title {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 22px;
+}
+.planned-visit .plan-step {
+    width: 27px;
+    height: 27px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--gold-border);
+    border-radius: 8px;
+    color: #7c6021;
+    background: #faf7ef;
+    font-size: 12px;
+    font-weight: 650;
+    flex-shrink: 0;
+}
+.planned-visit .plan-section-title h2 {
+    font-size: 16px;
+    font-weight: 650;
+    line-height: 1.5;
+    letter-spacing: -0.25px;
+}
+.planned-visit .plan-section-title p {
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--muted);
+    margin-top: 3px;
+}
+.planned-visit .plan-moments {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+}
+.planned-visit .plan-moment {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 14px 4px 11px;
+    height: auto;
+    border-color: var(--border);
+    white-space: normal;
+    border-radius: 11px;
+    background: white;
+    box-shadow: none;
+    position: relative;
+}
+.planned-visit .plan-moment:hover:not(:disabled) {
+    border-color: var(--gold);
+    background: #fcfaf5;
+}
+.planned-visit .plan-moment[aria-pressed='true'] {
+    border-color: var(--gold);
+    background: #faf6e9;
+    box-shadow: inset 0 0 0 1px var(--gold);
+}
+.planned-visit .plan-moment:disabled {
+    opacity: 0.48;
+}
+.planned-visit .plan-moment-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 24px;
+    margin-bottom: 3px;
+    color: var(--navy-light);
+}
+.planned-visit .plan-moment-check {
+    position: absolute;
+    top: 7px;
+    right: 7px;
+    width: 13px;
+    height: 13px;
+    color: #725619;
+}
+.planned-visit .plan-moment strong {
+    font-size: 13px;
+    font-weight: 650;
+}
+.planned-visit .plan-moment small {
+    color: var(--muted);
+    font-size: 10px;
+}
+.planned-visit .plan-moment-state {
+    color: var(--muted);
+    font-size: 9px;
+    margin-top: 4px;
+}
+.planned-visit .plan-moment[aria-pressed='true'] .plan-moment-state {
+    color: #785c21;
+}
+.planned-visit .plan-add-custom {
+    margin: 14px 0 12px;
+    width: 100%;
+    height: 42px;
+    border-style: dashed;
+    border-color: var(--border2);
+    color: var(--navy);
+    box-shadow: none;
+    font-size: 12px;
+}
+.planned-visit .plan-help {
+    font-size: 11px;
+    line-height: 1.8;
+    color: var(--muted);
+}
+.planned-visit .plan-section-outside {
+    margin: 2px 0 16px;
+}
+.planned-visit .plan-editors {
+    display: grid;
+    gap: 14px;
+}
+.planned-visit .plan-editor {
+    border-radius: 14px;
+    background: white;
+    border: 1px solid var(--border);
+    box-shadow: var(--plan-shadow);
+}
+.planned-visit .plan-editor summary {
+    list-style: none;
+    padding: 18px 20px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    cursor: pointer;
+    border-radius: inherit;
+}
+.planned-visit .plan-editor summary::-webkit-details-marker {
+    display: none;
+}
+.planned-visit .plan-editor summary strong {
+    font-size: 14px;
+    font-weight: 650;
+}
+.planned-visit .plan-editor-symbol {
+    background: #f1f3f8;
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+}
+.planned-visit .plan-editor-date {
+    display: block;
+    color: var(--muted);
+    font-size: 11px;
+    margin-top: 3px;
+}
+.planned-visit .plan-disclosure {
+    margin-left: auto;
+    width: 17px;
+    color: var(--muted);
+}
+.planned-visit .plan-editor[open] .plan-disclosure {
+    transform: rotate(180deg);
+}
+.planned-visit .plan-editor-body {
+    padding: 0 20px 20px;
+}
+.planned-visit .plan-label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+.planned-visit .plan-label svg {
+    width: 16px;
+    height: 16px;
+}
+.planned-visit .plan-time-section {
+    border: 0;
+    padding: 17px 0 0;
+    border-top: 1px solid #edf0f4;
+}
+.planned-visit .plan-time-section legend {
+    float: left;
+    width: 100%;
+}
+.planned-visit .plan-time-grid {
+    clear: both;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 8px;
+}
+.planned-visit .plan-time {
+    height: 39px;
+    min-width: 0;
+    font-size: 13px;
+    border-radius: 8px;
+    box-shadow: none;
+}
+.planned-visit .plan-time[aria-pressed='true'] {
+    background: var(--navy);
+    border-color: var(--navy);
+    color: white;
+}
+.planned-visit .plan-time:disabled {
+    text-decoration: line-through;
+    opacity: 0.36;
+}
+.planned-visit .plan-time-note {
+    clear: both;
+    font-size: 10px;
+    margin-top: 8px;
+    color: var(--muted);
+}
+.planned-visit .plan-facilities {
+    border-top: 1px solid #edf0f4;
+    padding-top: 18px;
+    margin-top: 20px;
+}
+.planned-visit .plan-counters {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+.planned-visit .plan-counter {
+    background: #f7f8fa;
+    padding: 12px;
+    border-radius: 10px;
+}
+.planned-visit .plan-counter-label {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+.planned-visit .plan-counter-label svg {
+    color: var(--muted);
+}
+.planned-visit .plan-counter-label strong {
+    font-size: 12px;
+    font-weight: 550;
+    display: block;
+}
+.planned-visit .plan-counter-label small {
+    color: var(--muted);
+    font-size: 10px;
+    display: block;
+    margin-top: 2px;
+}
+.planned-visit .plan-counter-control {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 2px;
+}
+.planned-visit .plan-counter-control button {
+    min-width: 32px;
+}
+.planned-visit .plan-counter-control output {
+    font-size: 14px;
+    font-weight: 650;
+}
+.planned-visit .plan-counter-control svg {
+    width: 15px;
+    height: 15px;
+}
+.planned-visit .plan-facility-options {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 14px 0 12px;
+}
+.planned-visit .plan-facility-choice {
+    font-size: 11px;
+    min-height: 38px;
+    height: auto;
+    padding: 8px 10px;
+    gap: 7px;
+    box-shadow: none;
+}
+.planned-visit .plan-facility-choice svg {
+    width: 16px;
+    height: 16px;
+}
+.planned-visit .plan-facility-choice[aria-pressed='true'] {
+    background: #f7f2e5;
+    border-color: var(--gold);
+}
+.planned-visit .plan-choice-check {
+    width: 13px;
+    height: 13px;
+}
+.planned-visit .plan-calendar-section {
+    margin: 3px 0 22px;
+}
+.planned-visit .plan-calendar {
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    padding: 12px;
+    max-width: 350px;
+}
+.planned-visit .plan-calendar-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+.planned-visit .plan-calendar-nav strong {
+    font-size: 13px;
+    text-transform: capitalize;
+}
+.planned-visit .plan-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 3px;
+}
+.planned-visit .plan-weekday {
+    font-size: 10px;
+    color: var(--muted);
+    text-align: center;
+    padding-bottom: 6px;
+}
+.planned-visit .plan-day {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    font-size: 12px;
+    padding: 0;
+}
+.planned-visit .plan-day[aria-pressed='true'] {
+    background: var(--navy);
+    color: white;
+}
+.planned-visit .plan-day:disabled {
+    opacity: 0.26;
+}
+.planned-visit .plan-contact {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    border-bottom: 1px solid #edf0f4;
+    padding-bottom: 19px;
+    margin-bottom: 19px;
+}
+.planned-visit .plan-contact > div {
+    display: flex;
+    gap: 9px;
+    align-items: flex-start;
+    min-width: 0;
+}
+.planned-visit .plan-contact svg {
+    color: var(--muted);
+    width: 17px;
+    margin-top: 3px;
+}
+.planned-visit .plan-contact small {
+    display: block;
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 5px;
+}
+.planned-visit .plan-contact strong {
+    display: block;
+    font-size: 12px;
+    font-weight: 550;
+    overflow-wrap: anywhere;
+}
+.planned-visit .plan-email-field {
+    position: relative;
+}
+.planned-visit .plan-email-field > svg {
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    width: 17px;
+    height: 17px;
+    color: var(--muted);
+}
+.planned-visit .plan-email-field input {
+    height: 44px;
+    padding-left: 38px;
+    font-size: 14px;
+    border-color: var(--border2);
+    background: white;
+    border-radius: 9px;
+}
+.planned-visit .plan-email-field + .plan-help {
+    margin-top: 6px;
+}
+.planned-visit .plan-sidebar {
+    position: sticky;
+    top: 24px;
+    min-width: 0;
+    display: grid;
+    gap: 24px;
+}
+.planned-visit .plan-summary {
+    border: 1px solid #dedfda;
+    background: #f2f2ed;
+    padding: 20px 14px 14px;
+    border-radius: 16px;
+}
+.planned-visit .plan-summary-heading {
+    display: flex;
+    gap: 11px;
+    align-items: flex-start;
+    padding: 0 4px;
+    margin-bottom: 18px;
+}
+.planned-visit .plan-summary-heading > svg {
+    width: 24px;
+    height: 24px;
+    color: #92702c;
+}
+.planned-visit .plan-summary-heading h2 {
+    font-size: 18px;
+    font-weight: 650;
+    line-height: 1.4;
+    letter-spacing: -0.5px;
+}
+.planned-visit .plan-summary-heading p {
+    font-size: 11px;
+    margin-top: 3px;
+    color: var(--muted);
+}
+.planned-visit .plan-summary-empty {
+    text-align: center;
+    padding: 32px 12px;
+    border: 1px dashed #d2d7de;
+    border-radius: 10px;
+    margin-bottom: 14px;
+}
+.planned-visit .plan-summary-empty > svg {
+    width: 30px;
+    height: 30px;
+    margin: auto auto 14px;
+    color: #8691a3;
+}
+.planned-visit .plan-summary-empty p {
+    font-size: 13px;
+    font-weight: 550;
+}
+.planned-visit .plan-summary-empty span {
+    display: block;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 7px;
+}
+.planned-visit .plan-reservations {
+    display: grid;
+    gap: 10px;
+}
+.planned-visit .plan-reservation {
+    display: grid;
+    grid-template-columns: 86px minmax(0, 1fr) 28px;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    background: white;
+    border: 1px solid #e5e7e9;
+    border-radius: 12px;
+    box-shadow: 0 3px 8px rgb(26 39 68 / 2%);
+}
+.planned-visit .plan-reservation-moment {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 4px;
+    border-radius: 8px;
+    background: #f5f2e8;
+    color: #735a25;
+}
+.planned-visit .plan-reservation-moment strong {
+    font-size: 11px;
+    line-height: 1.5;
+    text-align: center;
+}
+.planned-visit .plan-reservation-moment svg {
+    width: 20px;
+    height: 20px;
+}
+.planned-visit .plan-reservation-details {
+    min-width: 0;
+    padding: 4px 0;
+}
+.planned-visit .plan-reservation-details > p {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin-bottom: 6px;
+    font-size: 11px;
+    line-height: 1.5;
+    font-weight: 550;
+}
+.planned-visit .plan-reservation-details > p svg {
+    width: 14px;
+    height: 14px;
+    margin-top: 1px;
+    color: var(--muted);
+}
+.planned-visit .plan-reservation-details > small {
+    display: block;
+    font-size: 9px;
+    color: var(--muted);
+    margin-top: 7px;
+}
+.planned-visit .plan-remove {
+    color: #8490a1;
+    width: 28px;
+}
+.planned-visit .plan-remove:hover {
+    color: #a12929;
+    background: #fff1f1;
+}
+.planned-visit .plan-remove svg {
+    width: 17px;
+    height: 17px;
+}
+.planned-visit .plan-summary-footer {
+    padding: 16px 3px 0;
+}
+.planned-visit .plan-summary-footer > div {
+    display: flex;
+    gap: 8px;
+    font-size: 12px;
+    margin-bottom: 16px;
+    align-items: flex-start;
+}
+.planned-visit .plan-summary-footer > div svg {
+    width: 17px;
+    height: 17px;
+    color: var(--muted);
+}
+.planned-visit .plan-summary-footer > div small {
+    display: block;
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 3px;
+}
+.planned-visit .plan-submit {
+    width: 100%;
+    background: var(--navy);
+    color: white;
+    height: 46px;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 16px;
+    font-size: 12px;
+    border-radius: 10px;
+}
+.planned-visit .plan-submit:hover:not(:disabled) {
+    background: var(--navy-hover);
+}
+.planned-visit .plan-submit:disabled {
+    opacity: 0.45;
+}
+.planned-visit .plan-summary-footer > p {
+    color: var(--muted);
+    font-size: 10px;
+    text-align: center;
+    line-height: 1.6;
+    padding: 10px 6px 0;
+}
+.planned-visit .plan-saved > h2 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 650;
+    margin-bottom: 12px;
+}
+.planned-visit .plan-saved > h2 span {
+    background: #e5e9ef;
+    border-radius: 6px;
+    padding: 2px 6px;
+    font-size: 10px;
+}
+.planned-visit .plan-reservation-saved {
+    grid-template-columns: 78px minmax(0, 1fr) 28px;
+    gap: 10px;
+}
+.planned-visit .plan-reservation-saved .plan-reservation-moment {
+    background: #eef2f6;
+    color: var(--navy);
+}
+.planned-visit .plan-status {
+    display: inline-flex;
+    font-size: 9px;
+    border-radius: 5px;
+    padding: 3px 6px;
+    color: #2c603d;
+    background: #edf5ee;
+    margin: 2px 0;
+}
+.planned-visit .plan-status-cancelled {
+    background: #f8eeee;
+    color: #9a3636;
+}
+.planned-visit .plan-status-completed {
+    background: #edf0f4;
+    color: var(--muted);
+}
+.planned-visit .plan-booking-code {
+    display: block;
+    font-size: 11px;
+    margin-top: 3px;
+    overflow-wrap: anywhere;
+}
+.planned-visit .plan-manage {
+    display: grid;
+    place-items: center;
+    min-height: 36px;
+    width: 28px;
+    border-radius: 6px;
+    color: var(--navy-light);
+}
+.planned-visit .plan-manage:hover {
+    background: #edf0f4;
+}
+.planned-visit .plan-manage svg {
+    width: 17px;
+    height: 17px;
+}
+.planned-visit .plan-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    margin-top: 28px;
+    color: var(--muted);
+    font-size: 10px;
+    text-align: center;
+    line-height: 1.7;
+}
+.planned-visit .plan-footer svg {
+    width: 14px;
+    height: 14px;
+}
+.planned-visit .plan-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 18px;
+    background: #fff9e9;
+    border: 1px solid #ead9ac;
+    border-radius: 12px;
+    font-size: 13px;
+    line-height: 1.7;
+    margin-bottom: 24px;
+}
+.planned-visit .plan-error {
+    color: #a53030;
+    background: #fff4f2;
+    border-radius: 8px;
+    font-size: 12px;
+    line-height: 1.7;
+    padding: 10px 12px;
+    margin-top: 10px;
+}
+@media (max-width: 1000px) {
+    .planned-visit .plan-layout {
+        grid-template-columns: minmax(0, 1fr) 340px;
+        gap: 20px;
+    }
+    .planned-visit .plan-memorial {
+        padding: 22px;
+        gap: 24px;
+    }
+    .planned-visit .plan-memorial-details {
+        gap: 20px;
+    }
+    .planned-visit .plan-memorial-name h2 {
+        font-size: 20px;
+    }
+    .planned-visit .plan-moments {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+@media (max-width: 760px) {
+    .planned-visit .plan-brand {
+        padding: 20px;
+    }
+    .planned-visit .plan-container {
+        padding: 10px 20px 28px;
+    }
+    .planned-visit .plan-layout {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 24px;
+    }
+    .planned-visit .plan-sidebar {
+        position: static;
+    }
+    .planned-visit .plan-memorial {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 22px;
+        padding: 22px;
+    }
+    .planned-visit .plan-memorial-details {
+        padding-top: 18px;
+        border-top: 1px solid rgb(255 255 255 / 15%);
+        justify-content: space-between;
+        gap: 12px;
+    }
+    .planned-visit .plan-memorial-details dd {
+        font-size: 12px;
+    }
+    .planned-visit .plan-panel {
+        padding: 20px;
+    }
+    .planned-visit .plan-moments {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+    .planned-visit .plan-moment strong {
+        font-size: 12px;
+    }
+    .planned-visit .plan-summary {
+        padding: 20px 16px 16px;
+    }
+    .planned-visit .plan-reservation {
+        grid-template-columns: 92px minmax(0, 1fr) 32px;
+    }
+    .planned-visit .plan-reservation-details > p {
+        font-size: 12px;
+    }
+    .planned-visit .plan-summary-footer > p,
+    .planned-visit .plan-help {
+        font-size: 12px;
+    }
+    .planned-visit .plan-submit {
+        height: 48px;
+        font-size: 14px;
+    }
+}
+@media (max-width: 440px) {
+    .planned-visit .plan-brand {
+        padding: 18px 16px;
+    }
+    .planned-visit .plan-container {
+        padding: 8px 16px 24px;
+    }
+    .planned-visit .plan-panel {
+        padding: 18px 16px;
+    }
+    .planned-visit .plan-moments {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+    .planned-visit .plan-moment {
+        flex-direction: row;
+        flex-wrap: wrap;
+        column-gap: 8px;
+        padding: 12px 8px;
+    }
+    .planned-visit .plan-moment-icon {
+        margin: 0;
+        min-height: 18px;
+    }
+    .planned-visit .plan-moment-icon > svg {
+        width: 17px;
+        height: 17px;
+    }
+    .planned-visit .plan-moment-icon .plan-moment-check {
+        width: 12px;
+        height: 12px;
+    }
+    .planned-visit .plan-moment strong {
+        font-size: 13px;
+    }
+    .planned-visit .plan-moment small {
+        width: 100%;
+        font-size: 11px;
+        margin-top: 4px;
+    }
+    .planned-visit .plan-moment-state {
+        font-size: 10px;
+        margin: 0;
+    }
+    .planned-visit .plan-memorial-details {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        row-gap: 14px;
+    }
+    .planned-visit .plan-memorial-details > div:last-child {
+        grid-column: 1 / -1;
+    }
+    .planned-visit .plan-memorial-name h2 {
+        font-size: 21px;
+    }
+    .planned-visit .plan-section-title h2 {
+        font-size: 15px;
+    }
+    .planned-visit .plan-time-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+    .planned-visit .plan-contact {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .planned-visit .plan-email-field input {
+        font-size: 16px;
+    }
+    .planned-visit .plan-reservation {
+        grid-template-columns: 78px minmax(0, 1fr) 28px;
+        gap: 9px;
+        padding: 8px;
+    }
+    .planned-visit .plan-reservation-details > p {
+        font-size: 11px;
+    }
+    .planned-visit .plan-reservation-moment strong {
+        font-size: 11px;
+    }
+    .planned-visit .plan-counter {
+        padding: 10px;
+    }
+}
+
+@media (min-width: 761px) and (max-width: 1100px) {
+    .planned-visit .plan-memorial-details {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        row-gap: 16px;
+    }
+}
+
+.planned-visit .plan-layout[data-read-only='true'] {
+    grid-template-columns: minmax(0, 1fr);
+}
+.planned-visit .plan-layout[data-read-only='true'] .plan-main {
+    display: none;
+}
+.planned-visit .plan-layout[data-read-only='true'] .plan-sidebar {
+    position: static;
+}
+
+.planned-visit .plan-summary-footer .plan-consent-note {
+    font-size: 11px;
+    line-height: 1.7;
+    color: var(--muted);
+    margin: 0 0 12px;
+    text-align: left;
+}

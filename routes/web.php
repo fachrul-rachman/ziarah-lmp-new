@@ -15,6 +15,7 @@ use App\Http\Controllers\Booking\BookingController;
 use App\Http\Controllers\Booking\BookingSubmitController;
 use App\Http\Controllers\Booking\EventRulesController;
 use App\Http\Controllers\Booking\PublicBookingController;
+use App\Http\Controllers\Booking\VisitationPlanController;
 use App\Http\Controllers\Booking\WalkInController;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Models\Booking;
@@ -24,6 +25,10 @@ use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+
+Route::get('/plan/{token}', [VisitationPlanController::class, 'show']);
+Route::get('/plan/{token}/options', [VisitationPlanController::class, 'options'])->middleware('throttle:60,1');
+Route::post('/plan/{token}', [VisitationPlanController::class, 'store'])->middleware('throttle:10,1');
 
 Route::get('/', [BookingController::class, 'index'])->name('home');
 Route::get('/booking/zones', [BookingController::class, 'zones'])->name('booking.zones');
@@ -44,10 +49,10 @@ Route::post('/booking', [BookingSubmitController::class, 'store'])->name('bookin
 Route::get('/booking/success/{publicToken}', [BookingSubmitController::class, 'success'])->name('booking.success');
 Route::get('/booking/pdf/{publicToken}', [BookingSubmitController::class, 'pdf'])->name('booking.pdf');
 Route::get('/booking/{publicToken}', [PublicBookingController::class, 'show'])->name('booking.show');
-Route::get('/booking/{publicToken}/cancel', [PublicBookingController::class, 'cancelForm'])->name('booking.cancel.form');
+Route::get('/booking/{publicToken}/cancel', [PublicBookingController::class, 'cancellationPage'])->name('booking.cancel.form');
 Route::post('/booking/{publicToken}/cancel', [PublicBookingController::class, 'cancel'])->name('booking.cancel');
 Route::get('/booking/{publicToken}/cancel/success', [PublicBookingController::class, 'cancelSuccess'])->name('booking.cancel.success');
-Route::get('/booking/{publicToken}/reschedule', [PublicBookingController::class, 'rescheduleForm'])->name('booking.reschedule.form');
+Route::get('/booking/{publicToken}/reschedule', [PublicBookingController::class, 'reschedulePage'])->name('booking.reschedule.form');
 Route::post('/booking/{publicToken}/reschedule', [PublicBookingController::class, 'reschedule'])->name('booking.reschedule');
 
 Route::get('/walk-in', [WalkInController::class, 'index'])->name('walk-in.index');
@@ -56,7 +61,7 @@ Route::get('/walk-in/success/{publicToken}', [WalkInController::class, 'success'
 
 Route::get('/login', fn () => redirect('/admin/login'))->name('login');
 
-Route::redirect('/admin', '/admin/dashboard');
+Route::get('/admin', fn () => redirect('/admin/dashboard'));
 
 Route::prefix('admin')->group(function () {
     Route::middleware('guest')->group(function () {

@@ -19,6 +19,7 @@ type BookingRow = {
   id: number
   customer_name: string
   customer_phone?: string | null
+  activity_label?: string
   activity_type: string
   location: string
   zone: string
@@ -438,7 +439,7 @@ export default function AdminDashboard() {
                                 </div>
                               ) : null}
                             </TableCell>
-                            <TableCell>{labelActivity(b.activity_type)}</TableCell>
+                            <TableCell>{b.activity_label ?? labelActivity(b.activity_type)}</TableCell>
                             <TableCell>
                               {b.location}
                               <div className="text-xs text-gray-600">
@@ -480,7 +481,7 @@ export default function AdminDashboard() {
                               : b.customer_phone}
                           </div>
                         ) : null}
-                        <div className="text-gray-700">{labelActivity(b.activity_type)}</div>
+                        <div className="text-gray-700">{b.activity_label ?? labelActivity(b.activity_type)}</div>
                         <div className="mt-1 text-gray-700">
                           {b.location} • {b.zone} • {b.lot}
                         </div>

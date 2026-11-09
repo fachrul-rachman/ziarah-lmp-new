@@ -14,6 +14,7 @@ type Booking = {
   customer_phone?: string | null
   additional_note?: string | null
   ethics_consented_at?: string | null
+  activity_label?: string
   activity_type: string
   grave_type: string
   location: string
@@ -30,6 +31,7 @@ type Booking = {
   }
   status: string
   cancel_reason: string | null
+  whatsapp_messages?: Array<{ id: number; kind: string; status: string; error_code: string | null; sent_at: string | null }>
   reschedules: Array<{
     from_date: string
     to_date: string
@@ -82,7 +84,7 @@ export default function AdminBookingDetail() {
                 </div>
                 <div>
                   <div className="text-gray-600">Email</div>
-                  <div className="font-medium">{booking.customer_email}</div>
+                  <div className="font-medium">{booking.customer_email || "-"}</div>
                 </div>
                 <div>
                   <div className="text-gray-600">Nomor Telepon</div>
@@ -96,7 +98,7 @@ export default function AdminBookingDetail() {
                 </div>
                 <div>
                   <div className="text-gray-600">Jenis kegiatan</div>
-                  <div className="font-medium">{labelActivity(booking.activity_type)}</div>
+                  <div className="font-medium">{booking.activity_label ?? labelActivity(booking.activity_type)}</div>
                 </div>
                 <div>
                   <div className="text-gray-600">Jenis makam</div>
@@ -188,11 +190,28 @@ export default function AdminBookingDetail() {
           </Card>
         </div>
 
+        <Card className="mt-4">
+          <CardHeader><CardTitle>Notifikasi WhatsApp</CardTitle></CardHeader>
+          <CardContent>
+            {(booking.whatsapp_messages ?? []).length === 0 ? <p>Belum ada notifikasi WhatsApp.</p> : (
+              <ul className="space-y-2 text-sm">
+                {booking.whatsapp_messages?.map((message, index) => (
+                  <li key={index}>
+                    #{message.id} {message.kind} — {message.status}{message.error_code ? ` (${message.error_code})` : ""}
+                    {message.sent_at ? ` · ${message.sent_at}` : ""}
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className="mt-3 text-sm text-gray-600">Status accepted berarti pesan diterima oleh Meta untuk diproses. Status unknown atau sending yang tertahan perlu diperiksa sebelum dikirim ulang.</p>
+          </CardContent>
+        </Card>
+
         <ConfirmDialog
           open={openCancel}
           onOpenChange={setOpenCancel}
           title="Cancel booking?"
-          description="Admin cancel tidak perlu alasan dan tidak mengirim email."
+          description="Pembatalan akan tampil pada halaman booking customer."
           confirmText="Cancel"
           confirmVariant="destructive"
           onConfirm={() => {

@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\Lot;
+use Carbon\CarbonImmutable;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -34,35 +36,22 @@ class BookingAvailabilityService
         ]);
         $ttlSeconds = max(1, (int) config('booking.lots_cache_seconds', 30));
 
-        try {
-            $repository = $cacheStore ? Cache::store($cacheStore) : Cache::store();
-        } catch (InvalidArgumentException) {
-            $repository = Cache::store();
-        }
-
-        /** @var array<int,array{id:int,lot_number:string,size:string,normalized_size:string}> $rows */
-        $rows = $repository->remember($cacheKey, now()->addSeconds($ttlSeconds), function () use (
-            $locationId,
-            $zoneId,
-            $graveType,
-            $visitDate,
-            $timeSlotId,
-            $excludeBookingId,
+        $loadLots = function () use (
+            $locationId, $zoneId, $graveType, $visitDate, $timeSlotId, $excludeBookingId,
         ) {
-            $bookedLotIds = DB::table('bookings')
-                ->where('visit_date', $visitDate)
-                ->where('time_slot_id', $timeSlotId)
-                ->whereIn('status', ['confirmed', 'rescheduled'])
-                ->when($excludeBookingId !== null, fn ($q) => $q->where('id', '!=', $excludeBookingId))
-                ->pluck('lot_id')
-                ->all();
+            $startTime = DB::table('time_slots')->where('id', $timeSlotId)->value('start_time');
+            if (! $startTime) {
+                return [];
+            }
 
             return Lot::query()
                 ->where('location_id', $locationId)
                 ->where('zone_id', $zoneId)
                 ->where('grave_type', $graveType)
-                ->whereNull('deleted_at')
-                ->when(count($bookedLotIds) > 0, fn ($q) => $q->whereNotIn('id', $bookedLotIds))
+                ->whereNotExists(function (Builder $query) use ($visitDate, $startTime, $excludeBookingId) {
+                    $this->conflictQuery($visitDate, $startTime, $excludeBookingId, $query)
+                        ->whereColumn('bookings.lot_id', 'lots.id');
+                })
                 ->orderBy('normalized_lot_number')
                 ->get(['id', 'lot_number', 'size', 'normalized_size'])
                 ->map(fn (Lot $lot) => [
@@ -73,8 +62,52 @@ class BookingAvailabilityService
                 ])
                 ->values()
                 ->all();
-        });
+        };
+
+        try {
+            $rows = Cache::store($cacheStore ?: null)->remember($cacheKey, now()->addSeconds($ttlSeconds), $loadLots);
+        } catch (\RedisException|InvalidArgumentException) {
+            $rows = $loadLots();
+        }
 
         return collect($rows);
+    }
+
+    public function conflicts(int $lotId, string $date, string $startTime, ?int $excludeBookingId = null): bool
+    {
+        return $this->conflictQuery($date, $startTime, $excludeBookingId)
+            ->where('bookings.lot_id', $lotId)->exists();
+    }
+
+    private function conflictQuery(string $date, string $startTime, ?int $excludeBookingId, ?Builder $query = null): Builder
+    {
+        $start = CarbonImmutable::parse($startTime);
+        $day = CarbonImmutable::parse($date);
+
+        return ($query ?? DB::query())->from('bookings')
+            ->join('time_slots', 'time_slots.id', '=', 'bookings.time_slot_id')
+            ->whereIn('bookings.status', ['confirmed', 'rescheduled'])
+            ->when($excludeBookingId !== null, fn ($q) => $q->where('bookings.id', '!=', $excludeBookingId))
+            ->where(function (Builder $dates) use ($date, $day, $start) {
+                $dates->where(function (Builder $sameDay) use ($date, $start) {
+                    $sameDay->whereDate('bookings.visit_date', $date);
+                    if ($start->hour >= 1) {
+                        $sameDay->where('time_slots.start_time', '>', $start->subHour()->format('H:i:s'));
+                    }
+                    if ($start->hour < 23) {
+                        $sameDay->where('time_slots.start_time', '<', $start->addHour()->format('H:i:s'));
+                    }
+                });
+                if ($start->hour === 0) {
+                    $dates->orWhere(fn (Builder $previous) => $previous
+                        ->whereDate('bookings.visit_date', $day->subDay()->toDateString())
+                        ->where('time_slots.start_time', '>', $start->subHour()->format('H:i:s')));
+                }
+                if ($start->hour === 23) {
+                    $dates->orWhere(fn (Builder $next) => $next
+                        ->whereDate('bookings.visit_date', $day->addDay()->toDateString())
+                        ->where('time_slots.start_time', '<', $start->addHour()->format('H:i:s')));
+                }
+            });
     }
 }

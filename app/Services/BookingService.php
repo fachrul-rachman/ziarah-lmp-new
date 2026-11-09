@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Jobs\SendBookingConfirmedEmailJob;
 use App\Models\Booking;
 use App\Models\Lot;
 use Carbon\CarbonImmutable;
@@ -13,9 +12,9 @@ use Illuminate\Support\Str;
 class BookingService
 {
     public function __construct(
-        private readonly BookingAvailabilityService $availability,
         private readonly BookingCodeService $codeService,
-        private readonly LotSizeRuleService $sizeRules,
+        private readonly BookingRulesService $rules,
+        private readonly BookingWhatsAppService $whatsapp,
     ) {}
 
     /**
@@ -46,27 +45,9 @@ class BookingService
         return DB::transaction(function () use ($data) {
             $additionalNote = trim((string) ($data['additional_note'] ?? ''));
 
+            $data['facilities'] = $this->rules->validate($data);
+
             $lot = Lot::query()->whereKey($data['lot_id'])->firstOrFail(['id', 'normalized_lot_number', 'normalized_size', 'size']);
-
-            $rule = $this->sizeRules->ruleForSize((string) ($lot->normalized_size ?: $lot->size));
-            $chairs = (int) $data['facilities']['chairs_count'];
-            $burn = (int) $data['facilities']['burn_barrels_count'];
-
-            if ($chairs < (int) $rule['chairs_min'] || $chairs > (int) $rule['chairs_max']) {
-                throw new \RuntimeException("Kursi minimal {$rule['chairs_min']} dan maksimal {$rule['chairs_max']}.");
-            }
-            if ($burn < (int) $rule['burn_barrels_min'] || $burn > (int) $rule['burn_barrels_max']) {
-                throw new \RuntimeException("Tong bakar minimal {$rule['burn_barrels_min']} dan maksimal {$rule['burn_barrels_max']}.");
-            }
-            if (! $rule['tent_allowed']) {
-                $data['facilities']['has_tent'] = false;
-            }
-            if (! $rule['prayer_table_allowed']) {
-                $data['facilities']['has_prayer_table'] = false;
-            }
-            if (! $rule['lamp_allowed']) {
-                $data['facilities']['has_lamp'] = false;
-            }
 
             $booking = new Booking([
                 'public_token' => (string) Str::ulid(),
@@ -77,7 +58,10 @@ class BookingService
                     (string) $lot->normalized_lot_number,
                 ),
                 'customer_name' => $data['customer_name'],
-                'customer_email' => $data['customer_email'],
+                'customer_email' => $data['customer_email'] ?? null,
+                'visitation_plan_id' => $data['visitation_plan_id'] ?? null,
+                'planned_moment' => $data['planned_moment'] ?? null,
+                'whatsapp_consented_at' => $data['whatsapp_consented_at'] ?? null,
                 'customer_phone' => $data['customer_phone'],
                 'additional_note' => $additionalNote !== '' ? $additionalNote : null,
                 'ethics_consented_at' => $data['ethics_consented_at'],
@@ -108,7 +92,7 @@ class BookingService
                 'has_lamp' => $data['facilities']['has_lamp'],
             ]);
 
-            DB::afterCommit(fn () => SendBookingConfirmedEmailJob::dispatch($booking->id));
+            $this->whatsapp->queue($booking, 'confirmation');
 
             return $booking;
         });

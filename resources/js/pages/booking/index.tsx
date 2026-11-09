@@ -166,6 +166,7 @@ export default function BookingIndex() {
 
   const [zones, setZones] = React.useState<Zone[]>([])
   const [lots, setLots] = React.useState<(Lot & { normalized_size?: string })[]>([])
+  const [lotsError, setLotsError] = React.useState("")
   const [hiddenFacilities, setHiddenFacilities] = React.useState<string[]>([])
   const [hiddenFacilityReasons, setHiddenFacilityReasons] = React.useState<HiddenFacilityReason[]>([])
   const [defaultSizeRule, setDefaultSizeRule] = React.useState<LotSizeRule | null>(null)
@@ -283,12 +284,22 @@ export default function BookingIndex() {
       visit_date: next.booking_date,
       time_slot_id: String(next.time_slot_id),
     })
-    const res = await fetch(`/booking/lots?${params.toString()}`, {
-      headers: { Accept: "application/json" },
-    })
-    if (!res.ok) return
-    const data = await res.json()
-    setLots(data.lots ?? [])
+    try {
+      const res = await fetch(`/booking/lots?${params.toString()}`, {
+        headers: { Accept: "application/json" },
+      })
+      if (!res.ok) {
+        setLots([])
+        setLotsError("Daftar lot gagal dimuat. Coba pilih ulang zona atau jam kunjungan.")
+        return
+      }
+      const data = await res.json()
+      setLots(data.lots ?? [])
+      setLotsError("")
+    } catch {
+      setLots([])
+      setLotsError("Koneksi terputus saat memuat lot. Coba pilih ulang zona atau jam kunjungan.")
+    }
   }
 
   async function fetchHiddenFacilities(next: {
@@ -572,6 +583,7 @@ export default function BookingIndex() {
       customer_name: state.name,
       customer_email: state.email,
       customer_phone: state.phone,
+      whatsapp_consent: true,
       additional_note: state.additional_note,
       ethics_confirmed: true,
     }
@@ -728,7 +740,9 @@ export default function BookingIndex() {
                 <div className="space">
                   <div>
                     <label className="field-label">Tanggal kunjungan</label>
-                    {renderCalendar()}
+                    {timeSlots.length > 0 ? renderCalendar() : (
+                      <p role="status" className="hint-box">Jadwal kunjungan belum tersedia. Silakan hubungi admin untuk menambahkan slot waktu.</p>
+                    )}
                     {errors.visit_date ? (
                       <p style={{ marginTop: 6, fontSize: 12, color: "var(--color-text-danger)" }}>
                         {errors.visit_date}
@@ -840,6 +854,7 @@ export default function BookingIndex() {
                           </div>
                         </div>
                         <div className="scroll-box" style={{ marginTop: 8, maxHeight: 260 }}>
+                          {lotsError ? <p role="alert" className="text-sm text-red-700">{lotsError}</p> : null}
                           {filteredLots.length === 0 ? (
                             <p style={{ fontSize: 13, color: "var(--hint)" }}>Tidak ditemukan.</p>
                           ) : (
@@ -1052,22 +1067,12 @@ export default function BookingIndex() {
                     ) : null}
                   </div>
                   <div>
-                    <label className="field-label">Alamat email</label>
-                    <input
-                      className="inp"
-                      type="email"
-                      placeholder="cth. budi@email.com"
-                      value={state.email}
-                      onChange={(e) => setState((p) => ({ ...p, email: e.target.value }))}
-                    />
-                    {errors.customer_email ? (
-                      <p style={{ marginTop: 6, fontSize: 12, color: "var(--color-text-danger)" }}>
-                        {errors.customer_email}
-                      </p>
-                    ) : null}
+                    <label className="field-label" htmlFor="customer-email">Email</label>
+                    <input id="customer-email" className="inp" type="email" autoComplete="email" placeholder="nama@email.com" value={state.email} onChange={(e) => setState((p) => ({ ...p, email: e.target.value }))} />
+                    {errors.customer_email && <p role="alert" className="mt-1 text-sm text-red-700">{errors.customer_email}</p>}
                   </div>
                   <div>
-                    <label className="field-label">Nomor telepon</label>
+                    <label className="field-label">Nomor WhatsApp aktif</label>
                     <input
                       className="inp"
                       type="tel"
@@ -1088,7 +1093,7 @@ export default function BookingIndex() {
                         {errors.customer_phone}
                       </p>
                     ) : null}
-                  </div>
+                    </div>
 
                   <div className="summary">
                     <div className="summary-head">
@@ -1153,6 +1158,7 @@ export default function BookingIndex() {
                     ) : null}
                   </div>
 
+                  <p className="text-xs leading-5 text-[#5a6480]">Dengan konfirmasi, Anda setuju menerima notifikasi WhatsApp.</p>
                   <button
                     type="button"
                     className="btn-confirm"

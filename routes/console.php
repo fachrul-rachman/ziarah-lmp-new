@@ -18,3 +18,5 @@ Schedule::command('discord:notify-h1')
     ->everyMinute()
     ->timezone('Asia/Jakarta')
     ->withoutOverlapping();
+
+Schedule::command('whatsapp:bookings')->everyMinute()->timezone('Asia/Jakarta')->withoutOverlapping();

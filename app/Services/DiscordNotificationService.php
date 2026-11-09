@@ -198,7 +198,7 @@ class DiscordNotificationService
             $fileName = "{$category}-{$safeLocation}-{$dateFileText}-batch-{$batchFileText}.xlsx";
             $excelPath = 'discord/'.$fileName;
 
-            Excel::store(new AdminBookingExport($locRows, $targetDate, $targetDate, $category === 'ziarah'), $excelPath);
+            Excel::store(new AdminBookingExport($locRows, $targetDate, $targetDate, $category === 'ziarah' && ! collect($locRows)->contains('is_planned', true)), $excelPath);
             $attachments[] = ['type' => 'excel', 'path' => $excelPath];
         }
 
@@ -250,6 +250,7 @@ class DiscordNotificationService
             '',
             '📊 Ringkasan:',
             "Total Booking: {$totBooking}",
+            'Ziarah Terencana: '.count(array_filter($rows, fn ($row) => $row['is_planned'] ?? false)),
             "Total Tenda: {$tenda}",
             "Total Kursi: {$kursi}",
             "Total Tong Bakar: {$tong}",
@@ -269,14 +270,6 @@ class DiscordNotificationService
         $visitDateLabel = optional($b->visit_date)->timezone('Asia/Jakarta')->format('d M Y');
         $visitDateSort = optional($b->visit_date)->format('Y-m-d') ?? '';
 
-        $activityLabel = match ($b->activity_type) {
-            'ziarah' => 'Ziarah',
-            'naik_batu' => 'Naik Batu',
-            'start_work' => 'Start Work',
-            'wang_san' => 'Wang San',
-            default => (string) ($b->activity_type ?? ''),
-        };
-
         $graveType = $b->grave_type ?? $b->lot?->grave_type;
         $graveLabel = $graveType === 'kotak_abu' ? 'Kotak Abu' : 'Makam';
 
@@ -291,7 +284,8 @@ class DiscordNotificationService
             'booking_id' => $b->id,
             'booking_code' => (string) ($b->booking_code ?? ''),
             'activity_type' => (string) ($b->activity_type ?? ''),
-            'activity_label' => $activityLabel,
+            'activity_label' => $b->activityLabel(),
+            'is_planned' => (bool) $b->visitation_plan_id,
             // Keep key consistent with AdminBookingExport / ExportReportService.
             'visit_schedule' => trim(($visitDateLabel ?: '').($visitDateLabel && $start ? ', ' : '').($start ?: '')),
             // Useful for stable sorting (even if not used by the export today).

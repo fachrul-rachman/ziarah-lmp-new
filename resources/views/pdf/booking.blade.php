@@ -1,11 +1,6 @@
 @php
     /** @var \App\Models\Booking $booking */
-    $activityLabel = [
-        'ziarah' => 'Ziarah',
-        'naik_batu' => 'Naik Batu',
-        'start_work' => 'Start Work',
-        'wang_san' => 'Wang San',
-    ][$booking->activity_type] ?? $booking->activity_type;
+    $activityLabel = $booking->activityLabel();
 
     $graveLabel = $booking->grave_type === 'kotak_abu' ? 'Kotak Abu' : 'Makam';
 
@@ -27,7 +22,7 @@
         .row:last-child { border-bottom: 0; }
         .k { color: #5a6480; width: 38%; }
         .v { font-weight: 600; width: 62%; text-align: right; }
-        .code { font-family: monospace; font-size: 14px; }
+        .code { font-family: monospace; font-size: 11px; overflow-wrap: anywhere; }
     </style>
 </head>
 <body>
@@ -43,7 +38,7 @@
         <div class="row"><div class="k">Jenis makam</div><div class="v">{{ $graveLabel }}</div></div>
         <div class="row"><div class="k">Nomor lot</div><div class="v">{{ $booking->lot->lot_number ?? '-' }} ({{ $booking->lot->size ?? '-' }})</div></div>
         <div class="row"><div class="k">Nama</div><div class="v">{{ $booking->customer_name }}</div></div>
-        <div class="row"><div class="k">Email</div><div class="v">{{ $booking->customer_email }}</div></div>
+        <div class="row"><div class="k">WhatsApp</div><div class="v">{{ $booking->customer_phone }}</div></div>
         @if (filled($booking->additional_note))
             <div class="row"><div class="k">Catatan tambahan</div><div class="v" style="text-align: left; white-space: pre-line;">{{ $booking->additional_note }}</div></div>
         @endif

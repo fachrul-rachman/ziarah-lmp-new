@@ -9,6 +9,7 @@ use App\Models\ExportJob;
 use App\Models\Location;
 use App\Models\WalkIn;
 use App\Models\Zone;
+use App\Services\CancelBookingService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -81,6 +82,7 @@ class AdminDashboardController extends Controller
                 'customer_name' => $b->customer_name,
                 'customer_phone' => $b->customer_phone,
                 'activity_type' => $b->activity_type,
+                'activity_label' => $b->activityLabel(),
                 'location' => $b->location->name ?? '-',
                 'zone' => $b->zone->name ?? '-',
                 'lot' => $b->lot ? "{$b->lot->lot_number} ({$b->lot->size})" : '-',
@@ -142,6 +144,8 @@ class AdminDashboardController extends Controller
                 'additional_note' => $booking->additional_note,
                 'ethics_consented_at' => $booking->ethics_consented_at?->timezone('Asia/Jakarta')->format('d M Y, H:i'),
                 'activity_type' => $booking->activity_type,
+                'activity_label' => $booking->activityLabel(),
+                'whatsapp_messages' => DB::table('booking_whatsapp_messages')->where('booking_id', $booking->id)->orderByDesc('id')->get(['id', 'kind', 'status', 'error_code', 'sent_at']),
                 'grave_type' => $booking->grave_type,
                 'location' => $booking->location->name ?? '-',
                 'zone' => $booking->zone->name ?? '-',
@@ -164,14 +168,11 @@ class AdminDashboardController extends Controller
 
     public function cancel(Booking $booking): RedirectResponse
     {
-        if ($booking->status === 'cancelled') {
-            return redirect()->back()->with('success', 'Booking sudah dibatalkan.');
+        try {
+            app(CancelBookingService::class)->cancel($booking, null, byAdmin: true);
+        } catch (\RuntimeException $e) {
+            return redirect()->back()->withErrors(['cancel' => $e->getMessage()]);
         }
-
-        $booking->update([
-            'status' => 'cancelled',
-            'cancel_reason' => null,
-        ]);
 
         return redirect()->back()->with('success', 'Booking berhasil dibatalkan.');
     }

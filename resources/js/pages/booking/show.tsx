@@ -5,6 +5,7 @@ type Booking = {
   id: number
   public_token: string
   booking_code: string
+  activity_label?: string
   activity_type: string
   customer_name: string
   customer_email: string
@@ -126,7 +127,7 @@ export default function BookingShow() {
             <div className="info-grid">
               <div className="info-cell">
                 <div className="info-key">Jenis kegiatan</div>
-                <div className="info-val">{labelActivity(booking.activity_type)}</div>
+                <div className="info-val">{booking.activity_label ?? labelActivity(booking.activity_type)}</div>
               </div>
               <div className="info-cell">
                 <div className="info-key">Tanggal &amp; Jam</div>
@@ -166,12 +167,6 @@ export default function BookingShow() {
               <div className="info-cell">
                 <div className="info-key">Nama</div>
                 <div className="info-val">{booking.customer_name}</div>
-              </div>
-              <div className="info-cell">
-                <div className="info-key">Email</div>
-                <div className="info-val" style={{ wordBreak: "break-all", fontSize: 12 }}>
-                  {booking.customer_email}
-                </div>
               </div>
               <div className="info-cell">
                 <div className="info-key">Nomor telepon</div>

@@ -36,7 +36,7 @@ class PublicBookingController extends Controller
         ]);
     }
 
-    public function cancelForm(string $publicToken): Response
+    public function cancellationPage(string $publicToken): Response
     {
         $booking = $this->loadBookingByToken($publicToken);
         $expired = $this->isExpired($booking);
@@ -58,7 +58,7 @@ class PublicBookingController extends Controller
         ]);
 
         try {
-            $this->cancelService->cancelByCustomer($booking, (string) $validated['cancel_reason']);
+            $this->cancelService->cancel($booking, (string) $validated['cancel_reason']);
         } catch (\RuntimeException $e) {
             return redirect()->back()->withErrors(['cancel' => $e->getMessage()]);
         }
@@ -75,7 +75,7 @@ class PublicBookingController extends Controller
         ]);
     }
 
-    public function rescheduleForm(string $publicToken): Response
+    public function reschedulePage(string $publicToken): Response
     {
         $booking = $this->loadBookingByToken($publicToken);
         $expired = $this->isExpired($booking);
@@ -106,6 +106,7 @@ class PublicBookingController extends Controller
             'locations' => $locations,
             'timeSlots' => $timeSlots,
             'booking_rules' => $this->leadTime->payload(),
+            'maximum_date' => $booking->visitation_plan_id ? $booking->visitationPlan->maximumDate()->toDateString() : now()->timezone('Asia/Jakarta')->addDays((int) config('booking.lots_max_days_ahead', 100))->toDateString(),
         ]);
     }
 
@@ -127,7 +128,8 @@ class PublicBookingController extends Controller
             'has_lamp' => ['required', 'boolean'],
             'customer_name' => ['required', 'string', 'max:255'],
             'customer_email' => ['required', 'email', 'max:255'],
-            'customer_phone' => ['nullable', 'string', 'max:32'],
+            'whatsapp_consent' => ['required', 'accepted'],
+            'customer_phone' => ['required', 'string', 'max:32'],
             'additional_note' => ['nullable', 'string', 'max:1000'],
         ], [
             'customer_name.required' => 'Nama wajib diisi.',
@@ -187,7 +189,8 @@ class PublicBookingController extends Controller
                     'has_lamp' => (bool) $validated['has_lamp'],
                 ],
                 'customer_name' => (string) $validated['customer_name'],
-                'customer_email' => (string) $validated['customer_email'],
+                'customer_email' => $validated['customer_email'] ?? $booking->customer_email,
+                'whatsapp_consented_at' => now(),
                 'customer_phone' => ! empty($validated['customer_phone']) ? (string) $validated['customer_phone'] : null,
                 'additional_note' => $validated['additional_note'] ?? null,
             ]);
@@ -213,7 +216,7 @@ class PublicBookingController extends Controller
         $today = now()->timezone('Asia/Jakarta')->startOfDay();
         $visit = CarbonImmutable::parse($booking->visit_date, 'Asia/Jakarta')->startOfDay();
 
-        return $visit->lessThan($today);
+        return ! in_array($booking->status, ['confirmed', 'rescheduled'], true) || $visit->lessThan($today);
     }
 
     /**
@@ -229,6 +232,8 @@ class PublicBookingController extends Controller
             'public_token' => $booking->public_token,
             'booking_code' => $booking->booking_code,
             'activity_type' => $booking->activity_type,
+            'activity_label' => $booking->activityLabel(),
+            'visitation_plan_id' => $booking->visitation_plan_id,
             'customer_name' => $booking->customer_name,
             'customer_email' => $booking->customer_email,
             'customer_phone' => $booking->customer_phone,

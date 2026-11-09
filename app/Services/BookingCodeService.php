@@ -28,4 +28,3 @@ class BookingCodeService
         return "{$prefix}-{$datePart}-{$lotPart}";
     }
 }
-
