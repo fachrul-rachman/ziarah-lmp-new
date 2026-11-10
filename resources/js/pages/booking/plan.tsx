@@ -9,12 +9,11 @@ import {
     IconChevronLeft,
     IconChevronRight,
     IconClock,
-    IconExternalLink,
     IconFlame,
+    IconInfoCircle,
     IconLamp,
     IconLeaf,
     IconMail,
-    IconMapPin,
     IconMinus,
     IconPlus,
     IconTable,
@@ -119,6 +118,10 @@ function dateLabel(
     }).format(new Date(`${date}T12:00:00+07:00`));
 }
 
+const today = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Jakarta',
+}).format(new Date());
+
 function Calendar({
     value,
     min,
@@ -210,6 +213,7 @@ function Calendar({
                             className="plan-day"
                             aria-label={dateLabel(date)}
                             aria-pressed={value === date}
+                            data-today={date === today}
                             disabled={date < min || date > max}
                             onClick={() => onChange(date)}
                         >
@@ -218,6 +222,9 @@ function Calendar({
                     );
                 })}
             </div>
+            <p className="plan-calendar-note">
+                Tanggal yang dicoret berada di luar batas pemesanan.
+            </p>
         </div>
     );
 }
@@ -284,6 +291,7 @@ function ScheduleEditor({
     const selectedSlot = ready
         ? options.slots.find((slot) => slot.id === schedule.time_slot_id)
         : null;
+    const complete = !!selectedSlot?.available;
     const selectedHour = selectedSlot
         ? Number(selectedSlot.start_time.slice(0, 2))
         : null;
@@ -317,14 +325,17 @@ function ScheduleEditor({
                     onExpand();
                 }}
             >
-                <span className="plan-editor-symbol">
-                    <IconCalendar aria-hidden="true" />
-                </span>
                 <span>
                     <strong>{momentLabels[schedule.moment]}</strong>
                     <span className="plan-editor-date">
                         {dateLabel(schedule.date)}
                     </span>
+                </span>
+                <span className="plan-badge" data-complete={complete}>
+                    {complete && <IconCheck aria-hidden="true" />}
+                    {selectedSlot?.available
+                        ? `Jam ${selectedSlot.start_time.replace(':', '.')}`
+                        : 'Belum ada jam'}
                 </span>
                 <IconChevronDown
                     className="plan-disclosure"
@@ -403,6 +414,9 @@ function ScheduleEditor({
                                         });
                                     }}
                                 >
+                                    {schedule.time_slot_id === slot.id && (
+                                        <IconCheck aria-hidden="true" />
+                                    )}
                                     {slot.start_time.replace(':', '.')}
                                 </Button>
                             ))}
@@ -415,10 +429,19 @@ function ScheduleEditor({
                     )}
                     <p className="plan-time-note">Waktu Indonesia Barat</p>
                 </fieldset>
-                <div className="plan-facilities">
-                    <h3 className="plan-label">Fasilitas kunjungan</h3>
+                <div
+                    className="plan-facilities"
+                    role="group"
+                    aria-labelledby={`${prefix}-facilities`}
+                    aria-describedby={
+                        hidden.length > 0 ? `${prefix}-hint` : undefined
+                    }
+                >
+                    <h3 className="plan-label" id={`${prefix}-facilities`}>
+                        Fasilitas kunjungan
+                    </h3>
                     {hidden.length > 0 && (
-                        <p className="plan-help">
+                        <p className="plan-help" id={`${prefix}-hint`}>
                             Beberapa fasilitas tidak tersedia karena ada event
                             pada tanggal ini.
                         </p>
@@ -551,9 +574,6 @@ function ScheduleEditor({
                         })}
                     </div>
                 </div>
-                <span id={`${prefix}-hint`} className="plan-help">
-                    Fasilitas berlaku untuk jadwal ini.
-                </span>
             </div>
         </details>
     );
@@ -592,6 +612,7 @@ export default function VisitationPlanPage({
                 )
             );
         });
+    const showBar = !plan.expired && hasDates && form.data.schedules.length > 0;
     function addSchedule(moment: string) {
         form.clearErrors();
         const key = crypto.randomUUID();
@@ -611,7 +632,42 @@ export default function VisitationPlanPage({
             },
         ]);
     }
+    const incomplete = form.data.schedules.filter((schedule) => {
+        const options = optionsBySchedule[schedule.key];
+
+        return !(
+            options?.date === schedule.date &&
+            options.slots.some(
+                (slot) => slot.id === schedule.time_slot_id && slot.available,
+            )
+        );
+    });
+    const submitReason =
+        form.data.schedules.length === 0
+            ? ''
+            : incomplete.length > 0
+              ? `Lengkapi jam untuk ${incomplete
+                    .map((schedule) => momentLabels[schedule.moment])
+                    .join(', ')}.`
+              : '';
     function removeSchedule(key: string) {
+        const schedule = form.data.schedules.find((item) => item.key === key);
+
+        if (
+            schedule &&
+            (schedule.time_slot_id !== '' ||
+                schedule.has_tent ||
+                schedule.has_prayer_table ||
+                schedule.has_lamp ||
+                schedule.chairs_count !== rule.chairs_min ||
+                schedule.burn_barrels_count !== rule.burn_barrels_min) &&
+            !window.confirm(
+                `Hapus jadwal ${momentLabels[schedule.moment]}? Jam dan fasilitas yang sudah dipilih akan hilang.`,
+            )
+        ) {
+            return;
+        }
+
         form.clearErrors();
         form.setData(
             'schedules',
@@ -635,25 +691,26 @@ export default function VisitationPlanPage({
     }
 
     return (
-        <div className="booking-form planned-visit">
+        <div
+            className={
+                showBar
+                    ? 'booking-form planned-visit plan-has-bar'
+                    : 'booking-form planned-visit'
+            }
+        >
             <Head title="Ziarah Terencana">
                 <meta name="referrer" content="no-referrer" />
             </Head>
             <header className="plan-brand">
-                <span className="plan-brand-mark">
-                    <IconLeaf aria-hidden="true" />
-                </span>
-                <span>
-                    <strong>Lestari Memorial Park</strong>
-                    <small>Layanan kunjungan</small>
-                </span>
+                <img
+                    src="/LESTARI.png"
+                    alt="Lestari Memorial Park"
+                    width={132}
+                    height={44}
+                />
             </header>
             <main className="plan-container">
-                <div className="plan-page-heading">
-                    <span className="plan-eyebrow">Ziarah terencana</span>
-                    <h1>Rencanakan ziarah</h1>
-                    <p>Pilih momen, waktu kunjungan, dan fasilitas.</p>
-                </div>
+                <h1>Rencanakan ziarah</h1>
                 <section
                     className="plan-memorial"
                     aria-label="Informasi pemakaman"
@@ -690,7 +747,7 @@ export default function VisitationPlanPage({
                 </section>
                 {plan.expired && (
                     <div role="status" className="plan-notice">
-                        <IconCalendar aria-hidden="true" />
+                        <IconInfoCircle aria-hidden="true" />
                         <p>
                             Masa pemesanan sudah berakhir. Reservasi yang sudah
                             dibuat tetap dapat dikelola. Hubungi tim Lestari
@@ -766,6 +823,13 @@ export default function VisitationPlanPage({
                                                             aria-pressed={
                                                                 !!selected
                                                             }
+                                                            data-state={
+                                                                booked
+                                                                    ? 'booked'
+                                                                    : unavailable
+                                                                      ? 'unavailable'
+                                                                      : undefined
+                                                            }
                                                             disabled={
                                                                 booked ||
                                                                 unavailable ||
@@ -786,15 +850,12 @@ export default function VisitationPlanPage({
                                                                       )
                                                             }
                                                         >
-                                                            <span className="plan-moment-icon">
-                                                                <IconCalendar aria-hidden="true" />
-                                                                {selected && (
-                                                                    <IconCheck
-                                                                        className="plan-moment-check"
-                                                                        aria-hidden="true"
-                                                                    />
-                                                                )}
-                                                            </span>
+                                                            {selected && (
+                                                                <IconCheck
+                                                                    className="plan-moment-check"
+                                                                    aria-hidden="true"
+                                                                />
+                                                            )}
                                                             <strong>
                                                                 {
                                                                     momentLabels[
@@ -813,6 +874,9 @@ export default function VisitationPlanPage({
                                                                 )}
                                                             </small>
                                                             <span className="plan-moment-state">
+                                                                {booked && (
+                                                                    <IconCheck aria-hidden="true" />
+                                                                )}
                                                                 {booked
                                                                     ? 'Sudah dipesan'
                                                                     : unavailable
@@ -845,6 +909,8 @@ export default function VisitationPlanPage({
                                             {booking_rules.message} Tanggal
                                             bebas sampai{' '}
                                             {dateLabel(plan.maximum_date)}.
+                                            {form.data.schedules.length >= 20 &&
+                                                ' Batas 20 jadwal sudah tercapai.'}
                                         </p>
                                     </section>
                                     {form.data.schedules.length > 0 && (
@@ -1010,8 +1076,16 @@ export default function VisitationPlanPage({
                                                 aria-invalid={
                                                     !!errors.customer_email
                                                 }
+                                                aria-describedby="plan-email-help"
                                             />
                                         </div>
+                                        <p
+                                            className="plan-help"
+                                            id="plan-email-help"
+                                        >
+                                            Bukti reservasi dikirim ke email
+                                            ini.
+                                        </p>
                                     </section>
                                 </>
                             )}
@@ -1021,7 +1095,10 @@ export default function VisitationPlanPage({
                             aria-label="Ringkasan reservasi"
                         >
                             {!plan.expired && hasDates && (
-                                <section className="plan-summary">
+                                <section
+                                    className="plan-summary"
+                                    id="plan-summary"
+                                >
                                     <div className="plan-summary-heading">
                                         <IconCalendarCheck aria-hidden="true" />
                                         <div>
@@ -1064,9 +1141,9 @@ export default function VisitationPlanPage({
                                                             className="plan-reservation"
                                                             key={schedule.key}
                                                         >
-                                                            <div className="plan-reservation-moment">
-                                                                <IconCalendar aria-hidden="true" />
-                                                                <strong>
+                                                            <div className="plan-reservation-details">
+                                                                <strong className="plan-reservation-title">
+                                                                    <IconCalendar aria-hidden="true" />
                                                                     {
                                                                         momentLabels[
                                                                             schedule
@@ -1074,8 +1151,6 @@ export default function VisitationPlanPage({
                                                                         ]
                                                                     }
                                                                 </strong>
-                                                            </div>
-                                                            <div className="plan-reservation-details">
                                                                 <p>
                                                                     <IconCalendar aria-hidden="true" />
                                                                     <span>
@@ -1084,7 +1159,11 @@ export default function VisitationPlanPage({
                                                                         )}
                                                                     </span>
                                                                 </p>
-                                                                <p>
+                                                                <p
+                                                                    data-missing={
+                                                                        !time
+                                                                    }
+                                                                >
                                                                     <IconClock aria-hidden="true" />
                                                                     <span>
                                                                         {time
@@ -1092,10 +1171,6 @@ export default function VisitationPlanPage({
                                                                             : 'Pilih jam kunjungan'}
                                                                     </span>
                                                                 </p>
-                                                                <small>
-                                                                    Belum
-                                                                    dikonfirmasi
-                                                                </small>
                                                             </div>
                                                             <Button
                                                                 type="button"
@@ -1121,20 +1196,14 @@ export default function VisitationPlanPage({
                                         </div>
                                     )}
                                     <div className="plan-summary-footer">
-                                        <div>
-                                            <IconMapPin aria-hidden="true" />
-                                            <span>
-                                                {plan.location}
-                                                <small>
-                                                    Zona {plan.zone}, lot{' '}
-                                                    {plan.lot}
-                                                </small>
-                                            </span>
-                                        </div>
-                                        <p className="plan-consent-note">
-                                            Dengan konfirmasi, Anda setuju
-                                            menerima notifikasi WhatsApp.
-                                        </p>
+                                        {submitReason && !form.processing && (
+                                            <p
+                                                role="status"
+                                                className="plan-submit-reason"
+                                            >
+                                                {submitReason}
+                                            </p>
+                                        )}
                                         <Button
                                             type="submit"
                                             className="plan-submit"
@@ -1148,8 +1217,8 @@ export default function VisitationPlanPage({
                                             <IconArrowRight aria-hidden="true" />
                                         </Button>
                                         <p>
-                                            Setiap jadwal mendapatkan nomor
-                                            booking sendiri.
+                                            Dengan konfirmasi, Anda setuju
+                                            menerima notifikasi WhatsApp.
                                         </p>
                                     </div>
                                     {Object.entries(errors)
@@ -1180,17 +1249,15 @@ export default function VisitationPlanPage({
                                                 key={booking.token}
                                                 className="plan-reservation plan-reservation-saved"
                                             >
-                                                <div className="plan-reservation-moment">
-                                                    <IconCalendarCheck aria-hidden="true" />
-                                                    <strong>
+                                                <div className="plan-reservation-details">
+                                                    <strong className="plan-reservation-title">
+                                                        <IconCalendarCheck aria-hidden="true" />
                                                         {
                                                             momentLabels[
                                                                 booking.moment
                                                             ]
                                                         }
                                                     </strong>
-                                                </div>
-                                                <div className="plan-reservation-details">
                                                     <p>
                                                         <IconCalendar aria-hidden="true" />
                                                         <span>
@@ -1216,18 +1283,21 @@ export default function VisitationPlanPage({
                                                             booking.status
                                                         ] ?? booking.status}
                                                     </span>
-                                                    <small>Kode booking</small>
+                                                    <span className="plan-booking-code-label">
+                                                        Kode booking
+                                                    </span>
                                                     <strong className="plan-booking-code">
                                                         {booking.code}
                                                     </strong>
+                                                    <Link
+                                                        className="plan-manage"
+                                                        aria-label={`Kelola booking ${booking.code}`}
+                                                        href={`/booking/${booking.token}`}
+                                                    >
+                                                        Kelola booking
+                                                        <IconArrowRight aria-hidden="true" />
+                                                    </Link>
                                                 </div>
-                                                <Link
-                                                    className="plan-manage"
-                                                    aria-label={`Kelola booking ${booking.code}`}
-                                                    href={`/booking/${booking.token}`}
-                                                >
-                                                    <IconExternalLink aria-hidden="true" />
-                                                </Link>
                                             </article>
                                         ))}
                                     </div>
@@ -1244,6 +1314,14 @@ export default function VisitationPlanPage({
                     </span>
                 </footer>
             </main>
+            {showBar && (
+                <div className="plan-mobile-bar">
+                    <span>{form.data.schedules.length} jadwal dipilih</span>
+                    <a href="#plan-summary">
+                        {canSubmit ? 'Lanjut konfirmasi' : 'Lihat ringkasan'}
+                    </a>
+                </div>
+            )}
             <EthicsConfirmationDialog
                 open={confirmationOpen}
                 imageUrl={ethics_image_url}
