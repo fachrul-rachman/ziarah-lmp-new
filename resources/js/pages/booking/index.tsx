@@ -204,7 +204,7 @@ export default function BookingIndex() {
     const start = selectedTimeSlot?.start_time
     if (!start) return false
     const [h] = start.split(":").map((x) => Number(x))
-    return h >= 19 || h <= 3
+    return h >= 18 || h < 5
   }, [selectedTimeSlot])
 
   const filteredZones = React.useMemo(() => {

@@ -91,7 +91,7 @@ const momentLabels: Record<string, string> = {
     '40': 'Hari ke-40',
     '100': 'Hari ke-100',
     year: '1 Tahun',
-    custom: 'Tanggal bebas',
+    custom: 'Tanggal Bebas',
 };
 const statusLabels: Record<string, string> = {
     confirmed: 'Dikonfirmasi',
@@ -296,7 +296,7 @@ function ScheduleEditor({
         ? Number(selectedSlot.start_time.slice(0, 2))
         : null;
     const showLamp =
-        selectedHour !== null && (selectedHour >= 19 || selectedHour <= 3);
+        selectedHour !== null && (selectedHour >= 18 || selectedHour < 5);
     const prefix = `schedule-${schedule.key}`;
     const counters = [
         {
@@ -345,7 +345,7 @@ function ScheduleEditor({
             <div className="plan-editor-body">
                 {schedule.moment === 'custom' && (
                     <div className="plan-calendar-section">
-                        <p className="plan-label">Tanggal kunjungan</p>
+                        <p className="plan-label">Tanggal Kunjungan</p>
                         <Calendar
                             value={schedule.date}
                             min={plan.minimum_date}
@@ -358,7 +358,7 @@ function ScheduleEditor({
                 )}
                 <fieldset className="plan-time-section">
                     <legend className="plan-label">
-                        <IconClock aria-hidden="true" /> Jam kunjungan
+                        <IconClock aria-hidden="true" /> Jam Kunjungan
                     </legend>
                     {!schedule.date && (
                         <p className="plan-help">
@@ -409,7 +409,7 @@ function ScheduleEditor({
                                         onChange({
                                             time_slot_id: slot.id,
                                             has_lamp:
-                                                (hour >= 19 || hour <= 3) &&
+                                                (hour >= 18 || hour < 5) &&
                                                 schedule.has_lamp,
                                         });
                                     }}
@@ -438,7 +438,7 @@ function ScheduleEditor({
                     }
                 >
                     <h3 className="plan-label" id={`${prefix}-facilities`}>
-                        Fasilitas kunjungan
+                        Fasilitas Kunjungan
                     </h3>
                     {hidden.length > 0 && (
                         <p className="plan-help" id={`${prefix}-hint`}>
@@ -710,17 +710,17 @@ export default function VisitationPlanPage({
                 />
             </header>
             <main className="plan-container">
-                <h1>Rencanakan ziarah</h1>
+                <h1>Rencanakan Ziarah</h1>
                 <section
                     className="plan-memorial"
-                    aria-label="Informasi pemakaman"
+                    aria-label="Informasi Pemakaman"
                 >
                     <div className="plan-memorial-name">
                         <span className="plan-memorial-icon">
                             <IconLeaf aria-hidden="true" />
                         </span>
                         <div>
-                            <span>Untuk mengenang</span>
+                            <span>Untuk Mengenang</span>
                             <h2>{plan.deceased_name}</h2>
                         </div>
                     </div>
@@ -784,7 +784,7 @@ export default function VisitationPlanPage({
                                         <div className="plan-section-title">
                                             <span className="plan-step">1</span>
                                             <div>
-                                                <h2>Pilih momen ziarah</h2>
+                                                <h2>Pilih Momen Ziarah</h2>
                                                 <p>
                                                     Anda dapat memilih lebih
                                                     dari satu momen.
@@ -914,13 +914,13 @@ export default function VisitationPlanPage({
                                         </p>
                                     </section>
                                     {form.data.schedules.length > 0 && (
-                                        <section aria-label="Jadwal dan fasilitas">
+                                        <section aria-label="Jadwal dan Fasilitas">
                                             <div className="plan-section-title plan-section-outside">
                                                 <span className="plan-step">
                                                     2
                                                 </span>
                                                 <div>
-                                                    <h2>Atur kunjungan Anda</h2>
+                                                    <h2>Atur Kunjungan Anda</h2>
                                                     <p>
                                                         Tentukan jam dan
                                                         fasilitas setiap jadwal.
@@ -1022,7 +1022,7 @@ export default function VisitationPlanPage({
                                         <div className="plan-section-title">
                                             <span className="plan-step">3</span>
                                             <div>
-                                                <h2>Data pemesan</h2>
+                                                <h2>Data Pemesan</h2>
                                                 <p>
                                                     Konfirmasi dan pengingat
                                                     dikirim melalui WhatsApp.
@@ -1092,7 +1092,7 @@ export default function VisitationPlanPage({
                         </fieldset>
                         <aside
                             className="plan-sidebar"
-                            aria-label="Ringkasan reservasi"
+                            aria-label="Ringkasan Reservasi"
                         >
                             {!plan.expired && hasDates && (
                                 <section
@@ -1102,7 +1102,7 @@ export default function VisitationPlanPage({
                                     <div className="plan-summary-heading">
                                         <IconCalendarCheck aria-hidden="true" />
                                         <div>
-                                            <h2>Ringkasan reservasi</h2>
+                                            <h2>Ringkasan Reservasi</h2>
                                             <p>
                                                 Periksa jadwal sebelum
                                                 konfirmasi.
@@ -1240,7 +1240,7 @@ export default function VisitationPlanPage({
                             {bookings.length > 0 && (
                                 <section className="plan-saved">
                                     <h2>
-                                        Reservasi tersimpan{' '}
+                                        Reservasi Tersimpan{' '}
                                         <span>{bookings.length}</span>
                                     </h2>
                                     <div className="plan-reservations">
