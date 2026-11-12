@@ -106,7 +106,7 @@ class PublicBookingController extends Controller
             'locations' => $locations,
             'timeSlots' => $timeSlots,
             'booking_rules' => $this->leadTime->payload(),
-            'maximum_date' => $booking->visitation_plan_id ? $booking->visitationPlan->maximumDate()->toDateString() : now()->timezone('Asia/Jakarta')->addDays((int) config('booking.lots_max_days_ahead', 100))->toDateString(),
+            'maximum_date' => $booking->visitation_plan_id ? $booking->visitationPlan->maximumDate($booking->planned_moment)->toDateString() : now()->timezone('Asia/Jakarta')->addDays((int) config('booking.lots_max_days_ahead', 100))->toDateString(),
         ]);
     }
 

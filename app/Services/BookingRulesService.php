@@ -35,8 +35,9 @@ class BookingRulesService
         if ($planId) {
             $plan = VisitationPlan::findOrFail($planId);
             $visitAt = CarbonImmutable::parse($data['visit_date'].' '.$slot->start_time, 'Asia/Jakarta');
-            if ($lot->id !== $plan->lot_id || $date->greaterThan($plan->maximumDate()) || $visitAt->lessThan($plan->burial_at)) {
-                throw new \RuntimeException('Jadwal harus setelah pemakaman, maksimal satu tahun sejak meninggal, dan memakai lot pemakaman.');
+            $maximumDate = $plan->maximumDate($booking?->planned_moment ?? ($data['planned_moment'] ?? null));
+            if ($lot->id !== $plan->lot_id || $date->greaterThan($maximumDate) || $visitAt->lessThan($plan->burial_at)) {
+                throw new \RuntimeException('Jadwal harus setelah pemakaman, maksimal '.$maximumDate->format('d-m-Y').', dan memakai lot pemakaman.');
             }
         } elseif ($date->greaterThan(CarbonImmutable::now('Asia/Jakarta')->startOfDay()->addDays((int) config('booking.lots_max_days_ahead', 100)))) {
             throw new \RuntimeException('Tanggal kunjungan melebihi batas pemesanan.');

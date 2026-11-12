@@ -262,35 +262,64 @@
     background: white;
     border: 1px solid var(--border);
 }
-.planned-visit .plan-editor[open] {
+.planned-visit .plan-editor[data-expanded='true'] {
     border-color: var(--border2);
 }
-.planned-visit .plan-editor summary {
-    list-style: none;
+.planned-visit .plan-editor-header {
     padding: 16px 20px;
-    min-height: 64px;
-    display: flex;
-    gap: 12px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 10px;
     align-items: center;
-    cursor: pointer;
-    border-radius: inherit;
 }
-.planned-visit .plan-editor summary::-webkit-details-marker {
-    display: none;
-}
-.planned-visit .plan-editor summary > span:first-child {
-    flex: 1;
-    min-width: 0;
-}
-.planned-visit .plan-editor summary strong {
+.planned-visit .plan-editor-header h3 {
     font-size: 16px;
     font-weight: 650;
 }
+.planned-visit .plan-editor-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 36px;
+    cursor: pointer;
+}
+.planned-visit .plan-editor-date,
+.planned-visit .plan-editor-reference {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+}
 .planned-visit .plan-editor-date {
-    display: block;
+    font-size: 14px;
+    font-weight: 600;
+}
+.planned-visit .plan-editor-date > svg {
+    width: 16px;
+    height: 16px;
+    color: var(--muted);
+}
+.planned-visit .plan-date-edit {
+    min-height: 36px;
+    background: var(--navy);
+    color: white;
+    cursor: pointer;
+}
+.planned-visit .plan-date-edit:hover {
+    background: var(--navy-hover);
+}
+.planned-visit .plan-editor-reference {
+    margin-left: 24px;
     color: var(--muted);
     font-size: 13px;
-    margin-top: 2px;
+}
+.planned-visit .plan-date-reset {
+    padding: 0;
+    color: var(--navy);
+    font-size: inherit;
+    text-decoration: underline;
+    cursor: pointer;
 }
 .planned-visit .plan-badge {
     display: inline-flex;
@@ -316,7 +345,7 @@
     width: 18px;
     color: var(--muted);
 }
-.planned-visit .plan-editor[open] .plan-disclosure {
+.planned-visit .plan-editor[data-expanded='true'] .plan-disclosure {
     transform: rotate(180deg);
 }
 .planned-visit .plan-editor-body {
@@ -976,8 +1005,10 @@
     .planned-visit .plan-counters {
         grid-template-columns: minmax(0, 1fr);
     }
-    .planned-visit .plan-editor summary {
-        flex-wrap: wrap;
+    .planned-visit .plan-editor-toggle,
+    .planned-visit .plan-date-edit,
+    .planned-visit .plan-date-reset {
+        min-height: 44px;
     }
 }
 

@@ -118,16 +118,56 @@ test('expired plan preserves access to details but cannot add bookings and GET n
     expect(Booking::count())->toBe(0);
 });
 
-test('consent, fixed dates, burial cutoff and one year limit are enforced on the server', function () {
+test('consent, burial cutoff and one year limit are enforced on the server', function () {
     $plan = createTestPlan();
     $payload = ['ethics_confirmed' => true, 'customer_email' => 'budi@example.test', 'schedules' => [planSchedule()]];
     $this->post('/plan/'.$plan->public_token, $payload)->assertSessionHasErrors('whatsapp_consent');
     $payload['whatsapp_consent'] = true;
-    foreach ([planSchedule('40', '2026-12-12'), planSchedule('custom', '2027-11-02'), planSchedule('custom', '2026-11-02')] as $schedule) {
+    foreach ([planSchedule('40', '2027-11-02'), planSchedule('custom', '2027-11-02'), planSchedule('7', '2026-11-02')] as $schedule) {
         $payload['schedules'] = [$schedule];
         $this->post('/plan/'.$plan->public_token, $payload)->assertSessionHasErrors();
     }
     expect(Booking::count())->toBe(0);
+});
+
+test('choosing a different visit date preserves the original moment and prevents a second booking for it', function () {
+    $plan = createTestPlan();
+    $url = '/plan/'.$plan->public_token;
+    $payload = ['ethics_confirmed' => true, 'customer_email' => 'budi@example.test', 'whatsapp_consent' => true,
+        'schedules' => [planSchedule('7', '2026-11-20'), planSchedule('40', '2027-01-10')]];
+    $this->post($url, $payload)->assertSessionHasNoErrors();
+    expect($plan->bookings()->where('planned_moment', '40')->firstOrFail()->visit_date->toDateString())->toBe('2027-01-10');
+    $this->get($url)->assertInertia(fn (Assert $page) => $page->where('plan.moments.40', '2026-12-11'));
+
+    $payload['schedules'] = [planSchedule('40', '2027-02-01')];
+    $this->post($url, $payload)->assertSessionHasErrors('schedules.0.date');
+    expect($plan->bookings()->count())->toBe(2);
+});
+
+test('only the anniversary moment can book and reschedule up to one month after the anniversary', function () {
+    $plan = createTestPlan();
+    $url = '/plan/'.$plan->public_token;
+    $this->getJson($url.'/options?moment=year&date=2027-12-01')->assertOk()->assertJsonPath('slots.0.available', true);
+    $this->getJson($url.'/options?moment=year&date=2027-12-02')->assertUnprocessable();
+    $this->getJson($url.'/options?moment=40&date=2027-12-01')->assertUnprocessable();
+
+    $payload = ['ethics_confirmed' => true, 'customer_email' => 'budi@example.test', 'whatsapp_consent' => true,
+        'schedules' => [planSchedule('year', '2027-12-02')]];
+    $this->post($url, $payload)->assertSessionHasErrors('schedules.0.time_slot_id');
+    $payload['schedules'] = [planSchedule('year', '2027-12-01')];
+    $this->post($url, $payload)->assertSessionHasNoErrors();
+    $booking = $plan->bookings()->firstOrFail();
+    $this->get('/booking/'.$booking->public_token.'/reschedule')->assertInertia(fn (Assert $page) => $page->where('maximum_date', '2027-12-01'));
+    $this->getJson('/booking/lots?'.http_build_query(['location_id' => 1, 'zone_id' => 1, 'grave_type' => 'makam',
+        'visit_date' => '2027-12-01', 'time_slot_id' => 1, 'booking_token' => $booking->public_token]))->assertOk()->assertJsonCount(1, 'lots');
+    $input = bookingInput('2027-11-30');
+    $reschedule = collect($input)->except(['facilities', 'ethics_consented_at', 'whatsapp_consented_at'])->all()
+        + $input['facilities'] + ['whatsapp_consent' => true];
+    $this->post('/booking/'.$booking->public_token.'/reschedule', $reschedule)->assertSessionHasNoErrors();
+    $reschedule['visit_date'] = '2027-12-02';
+    $this->post('/booking/'.$booking->public_token.'/reschedule', $reschedule)->assertSessionHasErrors('availability');
+    expect($booking->fresh()->planned_moment)->toBe('year')
+        ->and($booking->fresh()->visit_date->toDateString())->toBe('2027-11-30');
 });
 
 test('shared availability and write checks reject overlapping slots including across midnight', function () {

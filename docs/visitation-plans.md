@@ -48,12 +48,12 @@ Contoh waktu kedaluwarsa di atas mengasumsikan rencana dibuat pada 9 November pu
 ## Aturan customer
 
 - Momen memakai tanggal meninggal ditambah 7, 40, atau 100 hari. Satu tahun menggunakan ulang tahun kalender dengan 29 Februari menjadi 28 Februari.
-- Tanggal bebas maksimal satu tahun sejak meninggal. Jam kunjungan harus setelah pemakaman dan memenuhi batas minimum booking dari pengaturan admin.
+- Tanggal acuan momen tetap ditampilkan. Tanggal kunjungan bisa dipilih hingga satu tahun sejak meninggal untuk momen 7, 40, 100 hari dan tanggal bebas. Khusus momen 1 Tahun, batasnya satu bulan kalender setelah tanggal acuan. Jam kunjungan harus setelah pemakaman dan memenuhi batas minimum booking dari pengaturan admin.
 - Pemesanan dan penambahan momen dibuka selama lima hari sejak rencana dibuat. Setelah itu booking yang sudah terbentuk tetap dapat dikelola melalui tautan masing-masing.
 - Momen tetap yang sudah aktif atau selesai tidak dapat dipesan ulang. Tanggal bebas tidak boleh mengulang tanggal booking aktif pada rencana yang sama. Satu pengiriman formulir menerima maksimal 20 jadwal.
 - Semua pilihan dalam satu pengiriman disimpan bersama. Bentrok satu jadwal membatalkan seluruh penyimpanan pengiriman itu.
 - Setiap booking mendapat kode sendiri. Kode booking memakai format ringkas seperti `Z-20261107-sb878`. Token dan ID internal membedakan reservasi serta pengiriman notifikasi. Kode lama tetap dapat ditampilkan pada booking lama.
-- Reschedule booking terencana tetap memakai lot pemakaman dan batas satu tahun. Label momen tetap tersimpan setelah tanggal digeser.
+- Reschedule booking terencana tetap memakai lot pemakaman dan batas tanggal sesuai momen. Label momen tetap tersimpan setelah tanggal digeser.
 
 ## Template dan pengiriman
 

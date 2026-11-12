@@ -109,6 +109,7 @@ class VisitationPlanController extends Controller
                 'lot' => $plan->lot->lot_number,
                 'moments' => $plan->moments(),
                 'maximum_date' => $plan->maximumDate()->toDateString(),
+                'year_maximum_date' => $plan->maximumDate('year')->toDateString(),
                 'minimum_date' => max($plan->burial_at->timezone('Asia/Jakarta')->toDateString(), $leadTime->earliestVisitAt()->toDateString()),
                 'expires_at' => $plan->expires_at->timezone('Asia/Jakarta')->format('d-m-Y H:i').' WIB',
                 'expired' => $plan->expires_at->isPast() || $plan->lot->trashed(),
@@ -133,7 +134,11 @@ class VisitationPlanController extends Controller
     {
         $plan = VisitationPlan::where('public_token', $token)->firstOrFail();
         abort_if($plan->expires_at->isPast(), 410, 'Tautan pemesanan sudah kedaluwarsa.');
-        $data = $request->validate(['date' => ['required', 'date_format:Y-m-d', 'before_or_equal:'.$plan->maximumDate()->toDateString()]]);
+        $maximumDate = $plan->maximumDate($request->input('moment') === 'year' ? 'year' : null);
+        $data = $request->validate([
+            'moment' => ['sometimes', 'required', 'in:7,40,100,year,custom'],
+            'date' => ['required', 'date_format:Y-m-d', 'before_or_equal:'.$maximumDate->toDateString()],
+        ]);
         $slots = TimeSlot::orderBy('start_time')->get()->map(function ($slot) use ($plan, $data, $availability, $leadTime) {
             $visitAt = CarbonImmutable::parse($data['date'].' '.$slot->start_time, 'Asia/Jakarta');
 
@@ -178,8 +183,8 @@ class VisitationPlanController extends Controller
                 $moment = $schedule['moment'];
                 $active = $plan->bookings()->whereIn('status', ['confirmed', 'rescheduled', 'completed']);
                 if ($moment !== 'custom') {
-                    if ($schedule['date'] !== $plan->moments()[$moment] || $active->where('planned_moment', $moment)->exists()) {
-                        throw ValidationException::withMessages(["schedules.{$index}.date" => 'Momen ini tidak valid atau sudah dipesan.']);
+                    if ($active->where('planned_moment', $moment)->exists()) {
+                        throw ValidationException::withMessages(["schedules.{$index}.date" => 'Momen ini sudah dipesan.']);
                     }
                 } elseif ($active->whereDate('visit_date', $schedule['date'])->exists()) {
                     throw ValidationException::withMessages(["schedules.{$index}.date" => 'Sudah ada booking pada tanggal ini.']);

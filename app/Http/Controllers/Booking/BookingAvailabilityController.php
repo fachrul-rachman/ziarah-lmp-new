@@ -37,7 +37,7 @@ class BookingAvailabilityController extends Controller
             $booking = Booking::where('public_token', $validated['booking_token'])->firstOrFail();
             $excludedId = $booking->id;
             if ($booking->visitation_plan_id) {
-                $maxDate = $booking->visitationPlan->maximumDate();
+                $maxDate = $booking->visitationPlan->maximumDate($booking->planned_moment);
             }
         }
         $visitDate = CarbonImmutable::parse($validated['visit_date'], 'Asia/Jakarta')->startOfDay();
@@ -51,7 +51,7 @@ class BookingAvailabilityController extends Controller
 
         if ($visitDate->greaterThan($maxDate)) {
             return response()->json([
-                'message' => 'Tanggal kunjungan maksimal 100 hari ke depan.',
+                'message' => 'Tanggal kunjungan maksimal '.$maxDate->format('d-m-Y').'.',
             ], 422);
         }
 

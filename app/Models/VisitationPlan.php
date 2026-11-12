@@ -27,9 +27,11 @@ class VisitationPlan extends Model
         return $this->hasMany(Booking::class);
     }
 
-    public function maximumDate(): CarbonImmutable
+    public function maximumDate(?string $moment = null): CarbonImmutable
     {
-        return $this->date_of_death->addYearNoOverflow();
+        $anniversary = $this->date_of_death->addYearNoOverflow();
+
+        return $moment === 'year' ? $anniversary->addMonthNoOverflow() : $anniversary;
     }
 
     public function moments(): array

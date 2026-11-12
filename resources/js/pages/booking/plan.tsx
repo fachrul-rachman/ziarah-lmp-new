@@ -66,6 +66,7 @@ type Plan = {
     moments: Record<string, string>;
     minimum_date: string;
     maximum_date: string;
+    year_maximum_date: string;
     expires_at: string;
     expired: boolean;
 };
@@ -249,6 +250,7 @@ function ScheduleEditor({
     const [options, setOptions] = React.useState<Options | null>(null);
     const [error, setError] = React.useState('');
     const [attempt, setAttempt] = React.useState(0);
+    const [editingDate, setEditingDate] = React.useState(false);
     const reportOptions = React.useEffectEvent(onOptions);
     React.useEffect(() => {
         if (!schedule.date) {
@@ -257,7 +259,7 @@ function ScheduleEditor({
 
         const controller = new AbortController();
         fetch(
-            `/plan/${plan.token}/options?date=${encodeURIComponent(schedule.date)}`,
+            `/plan/${plan.token}/options?date=${encodeURIComponent(schedule.date)}&moment=${encodeURIComponent(schedule.moment)}`,
             {
                 signal: controller.signal,
                 headers: { Accept: 'application/json' },
@@ -285,7 +287,7 @@ function ScheduleEditor({
             });
 
         return () => controller.abort();
-    }, [plan.token, schedule.date, schedule.key, attempt]);
+    }, [plan.token, schedule.date, schedule.key, schedule.moment, attempt]);
     const ready = options?.date === schedule.date && !error;
     const hidden = ready ? options.hidden_facilities : [];
     const selectedSlot = ready
@@ -298,6 +300,10 @@ function ScheduleEditor({
     const showLamp =
         selectedHour !== null && (selectedHour >= 18 || selectedHour < 5);
     const prefix = `schedule-${schedule.key}`;
+    const referenceDate = plan.moments[schedule.moment];
+    const showCalendar = !schedule.date || editingDate;
+    const dateChanged =
+        referenceDate && schedule.date && referenceDate !== schedule.date;
     const counters = [
         {
             field: 'chairs_count',
@@ -317,45 +323,104 @@ function ScheduleEditor({
         },
     ] as const;
 
+    function selectDate(date: string) {
+        if (date !== schedule.date) {
+            onChange({ date, time_slot_id: '', has_lamp: false });
+        }
+
+        setEditingDate(false);
+    }
+
     return (
-        <details className="plan-editor" open={expanded}>
-            <summary
-                onClick={(event) => {
-                    event.preventDefault();
-                    onExpand();
-                }}
-            >
-                <span>
-                    <strong>{momentLabels[schedule.moment]}</strong>
-                    <span className="plan-editor-date">
-                        {dateLabel(schedule.date)}
+        <article className="plan-editor" data-expanded={expanded}>
+            <div className="plan-editor-header">
+                <h3>{momentLabels[schedule.moment]}</h3>
+                <button
+                    type="button"
+                    className="plan-editor-toggle"
+                    aria-label={`${expanded ? 'Tutup' : 'Buka'} Jadwal ${momentLabels[schedule.moment]}`}
+                    aria-expanded={expanded}
+                    aria-controls={`${prefix}-body`}
+                    onClick={onExpand}
+                >
+                    <span className="plan-badge" data-complete={complete}>
+                        {complete && <IconCheck aria-hidden="true" />}
+                        {selectedSlot?.available
+                            ? `Jam ${selectedSlot.start_time.replace(':', '.')}`
+                            : 'Belum ada jam'}
                     </span>
-                </span>
-                <span className="plan-badge" data-complete={complete}>
-                    {complete && <IconCheck aria-hidden="true" />}
-                    {selectedSlot?.available
-                        ? `Jam ${selectedSlot.start_time.replace(':', '.')}`
-                        : 'Belum ada jam'}
-                </span>
-                <IconChevronDown
-                    className="plan-disclosure"
-                    aria-hidden="true"
-                />
-            </summary>
-            <div className="plan-editor-body">
-                {schedule.moment === 'custom' && (
-                    <div className="plan-calendar-section">
-                        <p className="plan-label">Tanggal Kunjungan</p>
-                        <Calendar
-                            value={schedule.date}
-                            min={plan.minimum_date}
-                            max={plan.maximum_date}
-                            onChange={(date) =>
-                                onChange({ date, time_slot_id: '' })
-                            }
-                        />
+                    <IconChevronDown
+                        className="plan-disclosure"
+                        aria-hidden="true"
+                    />
+                </button>
+                <div className="plan-editor-date">
+                    <IconCalendar aria-hidden="true" />
+                    <span>
+                        {schedule.date
+                            ? dateLabel(schedule.date)
+                            : 'Tanggal belum dipilih'}
+                    </span>
+                    {(schedule.date || !expanded) && (
+                        <Button
+                            type="button"
+                            size="sm"
+                            className="plan-date-edit"
+                            aria-expanded={expanded && showCalendar}
+                            aria-controls={`${prefix}-calendar`}
+                            onClick={() => {
+                                if (!expanded) {
+                                    onExpand();
+                                }
+
+                                setEditingDate(!expanded || !showCalendar);
+                            }}
+                        >
+                            {expanded && showCalendar
+                                ? 'Tutup Kalender'
+                                : schedule.date
+                                  ? 'Ubah Tanggal'
+                                  : 'Pilih Tanggal'}
+                        </Button>
+                    )}
+                </div>
+                {dateChanged && (
+                    <div className="plan-editor-reference">
+                        <span>Tanggal acuan {dateLabel(referenceDate)}</span>
+                        {referenceDate >= plan.minimum_date && (
+                            <Button
+                                type="button"
+                                variant="link"
+                                className="plan-date-reset"
+                                onClick={() => selectDate(referenceDate)}
+                            >
+                                Kembalikan
+                            </Button>
+                        )}
                     </div>
                 )}
+            </div>
+            <div
+                className="plan-editor-body"
+                id={`${prefix}-body`}
+                hidden={!expanded}
+            >
+                <div id={`${prefix}-calendar`} hidden={!showCalendar}>
+                    {showCalendar && (
+                        <div className="plan-calendar-section">
+                            <Calendar
+                                value={schedule.date}
+                                min={plan.minimum_date}
+                                max={
+                                    schedule.moment === 'year'
+                                        ? plan.year_maximum_date
+                                        : plan.maximum_date
+                                }
+                                onChange={selectDate}
+                            />
+                        </div>
+                    )}
+                </div>
                 <fieldset className="plan-time-section">
                     <legend className="plan-label">
                         <IconClock aria-hidden="true" /> Jam Kunjungan
@@ -575,7 +640,7 @@ function ScheduleEditor({
                     </div>
                 </div>
             </div>
-        </details>
+        </article>
     );
 }
 
@@ -598,7 +663,7 @@ export default function VisitationPlanPage({
         Record<string, Options>
     >({});
     const errors = form.errors as Record<string, string>;
-    const hasDates = plan.minimum_date <= plan.maximum_date;
+    const hasDates = plan.minimum_date <= plan.year_maximum_date;
     const canSubmit =
         form.data.schedules.length > 0 &&
         form.data.schedules.every((schedule) => {
@@ -616,13 +681,17 @@ export default function VisitationPlanPage({
     function addSchedule(moment: string) {
         form.clearErrors();
         const key = crypto.randomUUID();
+        const referenceDate = plan.moments[moment];
         setActiveEditor(key);
         form.setData('schedules', [
             ...form.data.schedules,
             {
                 key,
                 moment,
-                date: plan.moments[moment] ?? '',
+                date:
+                    referenceDate && referenceDate >= plan.minimum_date
+                        ? referenceDate
+                        : '',
                 time_slot_id: '',
                 chairs_count: rule.chairs_min,
                 burn_barrels_count: rule.burn_barrels_min,
@@ -646,7 +715,7 @@ export default function VisitationPlanPage({
         form.data.schedules.length === 0
             ? ''
             : incomplete.length > 0
-              ? `Lengkapi jam untuk ${incomplete
+              ? `Lengkapi tanggal dan jam untuk ${incomplete
                     .map((schedule) => momentLabels[schedule.moment])
                     .join(', ')}.`
               : '';
@@ -809,10 +878,10 @@ export default function VisitationPlanPage({
                                                                 moment,
                                                         );
                                                     const unavailable =
-                                                        date <
-                                                            plan.minimum_date ||
-                                                        date >
-                                                            plan.maximum_date;
+                                                        plan.minimum_date >
+                                                        (moment === 'year'
+                                                            ? plan.year_maximum_date
+                                                            : plan.maximum_date);
 
                                                     return (
                                                         <Button
@@ -896,6 +965,8 @@ export default function VisitationPlanPage({
                                             className="plan-add-custom"
                                             disabled={
                                                 form.processing ||
+                                                plan.minimum_date >
+                                                    plan.maximum_date ||
                                                 form.data.schedules.length >= 20
                                             }
                                             onClick={() =>
