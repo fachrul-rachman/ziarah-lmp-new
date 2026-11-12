@@ -64,7 +64,7 @@ class BookingRulesService
         }
 
         $hour = (int) substr($slot->start_time, 0, 2);
-        if ($hour >= 5 && $hour < 18) {
+        if ($hour >= 6 && $hour < 18) {
             $facilities['has_lamp'] = false;
         }
 

@@ -298,7 +298,7 @@ function ScheduleEditor({
         ? Number(selectedSlot.start_time.slice(0, 2))
         : null;
     const showLamp =
-        selectedHour !== null && (selectedHour >= 18 || selectedHour < 5);
+        selectedHour !== null && (selectedHour >= 18 || selectedHour < 6);
     const prefix = `schedule-${schedule.key}`;
     const referenceDate = plan.moments[schedule.moment];
     const showCalendar = !schedule.date || editingDate;
@@ -474,7 +474,7 @@ function ScheduleEditor({
                                         onChange({
                                             time_slot_id: slot.id,
                                             has_lamp:
-                                                (hour >= 18 || hour < 5) &&
+                                                (hour >= 18 || hour < 6) &&
                                                 schedule.has_lamp,
                                         });
                                     }}

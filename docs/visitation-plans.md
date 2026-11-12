@@ -86,4 +86,4 @@ API mewajibkan `burial.zone` dan `burial.lot_number` secara terpisah. Lokasi, zo
 
 Persetujuan WhatsApp diberikan melalui tindakan konfirmasi setelah pemberitahuan singkat di dekat tombol. Form tetap mengirim `whatsapp_consent: true` saat customer mengonfirmasi, dan server mencatat waktu persetujuan.
 
-Lampu hanya ditawarkan untuk jam mulai pukul 18.00 sampai 04.59 WIB, mengikuti form booking biasa. Server menonaktifkan lampu pada slot di luar rentang ini, termasuk saat reschedule.
+Lampu hanya ditawarkan untuk jam mulai pukul 18.00 sampai 05.59 WIB, mengikuti form booking biasa. Server menonaktifkan lampu pada slot di luar rentang ini, termasuk saat reschedule.

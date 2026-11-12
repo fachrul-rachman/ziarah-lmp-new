@@ -507,8 +507,9 @@ test('lamp follows the existing night hours in both booking and reschedule servi
     $booking = app(RescheduleBookingService::class)->reschedule($booking, $input);
     expect($booking->facilities->has_lamp)->toBe($allowed);
 })->with([
-    'end of night hours' => ['04:59:00', true],
-    'start of daytime hours' => ['05:00:00', false],
+    'five in the morning' => ['05:00:00', true],
+    'end of night hours' => ['05:59:00', true],
+    'start of daytime hours' => ['06:00:00', false],
     'end of daytime hours' => ['17:59:00', false],
     'start of night hours' => ['18:00:00', true],
 ]);
