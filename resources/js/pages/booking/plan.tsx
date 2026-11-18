@@ -92,7 +92,7 @@ const momentLabels: Record<string, string> = {
     '40': 'Hari ke-40',
     '100': 'Hari ke-100',
     year: '1 Tahun',
-    custom: 'Tanggal Bebas',
+    custom: 'Jadwal Lainnya',
 };
 const statusLabels: Record<string, string> = {
     confirmed: 'Dikonfirmasi',
@@ -958,27 +958,34 @@ export default function VisitationPlanPage({
                                                     );
                                                 },
                                             )}
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                className="plan-moment"
+                                                disabled={
+                                                    form.processing ||
+                                                    plan.minimum_date >
+                                                        plan.maximum_date ||
+                                                    form.data.schedules
+                                                        .length >= 20
+                                                }
+                                                onClick={() =>
+                                                    addSchedule('custom')
+                                                }
+                                            >
+                                                <strong>Jadwal Lainnya</strong>
+                                                <small>
+                                                    Sesuai pilihan Anda
+                                                </small>
+                                                <span className="plan-moment-state">
+                                                    <IconPlus aria-hidden="true" />
+                                                    Tambah jadwal
+                                                </span>
+                                            </Button>
                                         </div>
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            className="plan-add-custom"
-                                            disabled={
-                                                form.processing ||
-                                                plan.minimum_date >
-                                                    plan.maximum_date ||
-                                                form.data.schedules.length >= 20
-                                            }
-                                            onClick={() =>
-                                                addSchedule('custom')
-                                            }
-                                        >
-                                            <IconPlus aria-hidden="true" />
-                                            Tambah tanggal bebas
-                                        </Button>
                                         <p className="plan-help">
-                                            {booking_rules.message} Tanggal
-                                            bebas sampai{' '}
+                                            {booking_rules.message} Jadwal
+                                            lainnya sampai{' '}
                                             {dateLabel(plan.maximum_date)}.
                                             {form.data.schedules.length >= 20 &&
                                                 ' Batas 20 jadwal sudah tercapai.'}

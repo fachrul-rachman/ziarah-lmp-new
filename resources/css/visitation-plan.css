@@ -35,7 +35,7 @@
 
 /* Header */
 .planned-visit .plan-brand {
-    max-width: 1144px;
+    max-width: 1280px;
     padding: 20px 32px 8px;
     margin: auto;
 }
@@ -45,7 +45,7 @@
     width: auto;
 }
 .planned-visit .plan-container {
-    max-width: 1144px;
+    max-width: 1280px;
     padding: 16px 32px 40px;
     margin: auto;
 }
@@ -161,8 +161,9 @@
 /* Moments */
 .planned-visit .plan-moments {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 10px;
+    margin-bottom: 12px;
 }
 .planned-visit .plan-moment {
     display: flex;
@@ -212,7 +213,7 @@
 }
 .planned-visit .plan-moment small {
     color: var(--muted);
-    font-size: 13px;
+    font-size: 12px;
 }
 .planned-visit .plan-moment-state {
     display: inline-flex;
@@ -232,16 +233,6 @@
 }
 .planned-visit .plan-moment[data-state='booked'] .plan-moment-state {
     color: var(--plan-ok);
-}
-.planned-visit .plan-add-custom {
-    margin: 14px 0 12px;
-    width: 100%;
-    min-height: 48px;
-    border-style: dashed;
-    border-color: var(--border2);
-    color: var(--navy);
-    box-shadow: none;
-    font-size: 14px;
 }
 .planned-visit .plan-help {
     font-size: 13px;
@@ -877,6 +868,11 @@
 }
 
 /* Responsive */
+@media (max-width: 1200px) {
+    .planned-visit .plan-moments {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
 @media (max-width: 1000px) {
     .planned-visit .plan-layout {
         grid-template-columns: minmax(0, 1fr) 340px;
@@ -892,9 +888,6 @@
     .planned-visit .plan-memorial-name h2 {
         font-size: 22px;
     }
-    .planned-visit .plan-moments {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
 }
 @media (min-width: 761px) and (max-width: 1100px) {
     .planned-visit .plan-memorial-details {
@@ -904,6 +897,9 @@
     }
 }
 @media (max-width: 760px) {
+    .planned-visit .plan-moments > .plan-moment:last-child {
+        grid-column: 1 / -1;
+    }
     .planned-visit .plan-brand {
         padding: 18px 20px 4px;
     }
